@@ -75,8 +75,9 @@ npm run serve             # serve out/ localmente
 1. Crie um repositório e suba **o conteúdo desta pasta** na branch `main`.
    (Workflow, `next.config.mjs` e `package.json` assumem que a raiz do repo é esta pasta.)
 2. Em **Settings → Pages**, escolha **Source: GitHub Actions**.
-3. Em **Settings → Secrets and variables → Actions**, cadastre os quatro segredos
-   `NEXT_PUBLIC_FIREBASE_*`.
+3. Em **Settings → Secrets and variables → Actions → Variables**, cadastre as quatro variáveis
+   `NEXT_PUBLIC_FIREBASE_*` (são valores públicos). Se preferir usar *Secrets*, troque `vars.` por
+   `secrets.` no `deploy.yml`.
 4. O `deploy.yml` builda e publica `out/` a cada push na `main`.
 5. **basePath**: em project pages o workflow define `NEXT_PUBLIC_BASE_PATH=/nome-do-repo`
    automaticamente. Se usar um domínio próprio ou user page (`usuario.github.io`), remova essa

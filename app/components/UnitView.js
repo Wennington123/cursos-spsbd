@@ -2,18 +2,16 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { course } from "../../lib/courses.mjs";
-import { answerKey } from "../../lib/answers.mjs";
-import { gradeUnit, completedUnitIds, unitStates } from "../../lib/course-logic.mjs";
+import { gradeUnit, unitKey, courseStats, unitStates } from "../../lib/course-logic.mjs";
 import { firebaseEnabled, saveUnitCompletion } from "../../lib/firebaseClient.mjs";
 import { useAuth } from "./useAuth";
 import { useProgress } from "./useProgress";
 
-export default function UnitView({ unit }) {
+export default function UnitView({ course, unit }) {
   const { user, enabled } = useAuth();
   const progress = useProgress(user);
-  const completed = completedUnitIds(progress);
-  const states = unitStates(course.units, completed);
+  const st = courseStats(course, progress);
+  const states = unitStates(course.units, st.completed);
   const me = states.find((s) => s.id === unit.id);
   const index = course.units.findIndex((u) => u.id === unit.id);
   const next = course.units[index + 1];
@@ -30,8 +28,10 @@ export default function UnitView({ unit }) {
     setError("");
     setBusy(true);
     try {
-      const graded = gradeUnit(unit, answers, answerKey);
-      if (graded.passed) await saveUnitCompletion(user, unit.id, graded.score);
+      const graded = gradeUnit(unit, course.answers, answers);
+      if (graded.passed) {
+        await saveUnitCompletion(user, unitKey(course.slug, unit.id), graded.score);
+      }
       setResult(graded);
     } catch (err) {
       setError(err.message);
@@ -42,10 +42,12 @@ export default function UnitView({ unit }) {
 
   return (
     <>
-      <p className="muted"><Link href="/">← Voltar ao curso</Link></p>
+      <p className="muted">
+        <Link href="/">Cursos</Link> · <Link href={`/curso/${course.slug}`}>{course.title}</Link>
+      </p>
       <h1><span className="muted">{unit.id}</span> {unit.title}</h1>
 
-      <div className="card">
+      <div className="card accent-blue">
         <strong>Objetivos de aprendizagem</strong>
         <ul>
           {unit.objectives.map((o) => <li key={o}>{o}</li>)}
@@ -64,8 +66,7 @@ export default function UnitView({ unit }) {
 
       {!enabled && (
         <div className="status warn">
-          Firebase não configurado: a avaliação não pode ser registrada. Defina as variáveis
-          <code> NEXT_PUBLIC_FIREBASE_* </code> para habilitar login e progresso.
+          Firebase não configurado: a avaliação não pode ser registrada.
         </div>
       )}
       {enabled && !user && (
@@ -109,11 +110,11 @@ export default function UnitView({ unit }) {
       )}
 
       {(result?.passed || alreadyDone) && (
-        <div className="card">
+        <div className="card accent-green">
           {next ? (
-            <Link href={`/unidade/${next.slug}`}><button>Próxima unidade →</button></Link>
+            <Link href={`/curso/${course.slug}/${next.slug}`}><button>Próxima unidade →</button></Link>
           ) : (
-            <Link href="/certificado"><button>Emitir certificado</button></Link>
+            <Link href={`/curso/${course.slug}/certificado`}><button>Emitir certificado</button></Link>
           )}
         </div>
       )}

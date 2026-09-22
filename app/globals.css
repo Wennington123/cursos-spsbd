@@ -1,11 +1,25 @@
+/* Identidade visual derivada das logos (SPSBD-GC, CRAS, Secretaria de Assistência Social).
+   Azul-marinho escuro para texto; azuis, amarelo, verde, vermelho, magenta, laranja e roxo como acentos. */
+
 :root {
-  --bg: #f6f7f9;
-  --card: #ffffff;
+  --navy: #14335f;
   --ink: #1c2530;
   --muted: #5b6b7c;
   --line: #dde3ea;
-  --brand: #0b5c8a;
+  --bg: #f6f7f9;
+  --card: #ffffff;
+
+  --brand: #17568c;
   --brand-ink: #ffffff;
+
+  --blue: #2f7fc1;
+  --yellow: #f7c325;
+  --green: #3f9e5a;
+  --red: #d92b2b;
+  --magenta: #d81b7a;
+  --orange: #ef7d23;
+  --purple: #8267b5;
+
   --ok: #1a7f4b;
   --warn: #9a5b00;
 }
@@ -23,21 +37,43 @@ html, body {
 
 a { color: var(--brand); }
 
-.wrap { max-width: 860px; margin: 0 auto; padding: 24px 20px 64px; }
+.wrap { max-width: 900px; margin: 0 auto; padding: 24px 20px 64px; }
 
-.top {
-  background: var(--card);
-  border-bottom: 1px solid var(--line);
+/* ---------- Cabeçalho ---------- */
+
+.top { background: var(--card); border-bottom: 1px solid var(--line); }
+.top .wrap {
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
 }
-.top .wrap { padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.brand { font-weight: 700; color: var(--ink); text-decoration: none; }
-.brand small { display: block; font-weight: 400; color: var(--muted); }
+.brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--navy); }
+.brand img { height: 46px; width: auto; display: block; }
+.brand-title { font-weight: 700; font-size: 1.15rem; color: var(--navy); line-height: 1.2; }
+.brand-title small { display: block; font-weight: 400; color: var(--muted); font-size: .8rem; }
 
-h1 { font-size: 1.6rem; line-height: 1.25; margin: 0 0 8px; }
-h2 { font-size: 1.2rem; margin: 28px 0 8px; }
-h3 { font-size: 1.05rem; margin: 22px 0 6px; }
+.stripe { height: 5px; display: flex; }
+.stripe span { flex: 1; }
+.stripe .c1 { background: var(--blue); }
+.stripe .c2 { background: var(--green); }
+.stripe .c3 { background: var(--yellow); }
+.stripe .c4 { background: var(--orange); }
+.stripe .c5 { background: var(--red); }
+.stripe .c6 { background: var(--magenta); }
+.stripe .c7 { background: var(--purple); }
+
+/* ---------- Tipografia ---------- */
+
+h1 { font-size: 1.6rem; line-height: 1.25; margin: 0 0 8px; color: var(--navy); }
+h2 { font-size: 1.2rem; margin: 28px 0 8px; color: var(--navy); }
+h3 { font-size: 1.05rem; margin: 22px 0 6px; color: var(--navy); }
 
 .lede { color: var(--muted); margin: 0 0 20px; }
+
+/* ---------- Cartões ---------- */
 
 .card {
   background: var(--card);
@@ -46,6 +82,16 @@ h3 { font-size: 1.05rem; margin: 22px 0 6px; }
   padding: 18px 20px;
   margin: 14px 0;
 }
+.card.accent-blue { border-left: 4px solid var(--blue); }
+.card.accent-green { border-left: 4px solid var(--green); }
+.card.accent-yellow { border-left: 4px solid var(--yellow); }
+.card.accent-magenta { border-left: 4px solid var(--magenta); }
+
+.course-card { display: block; text-decoration: none; color: inherit; }
+.course-card h2 { margin: 0 0 4px; }
+.course-card .meta { color: var(--muted); font-size: .88rem; margin: 0 0 10px; }
+
+/* ---------- Listas ---------- */
 
 ul.units { list-style: none; margin: 0; padding: 0; }
 ul.units li { margin: 0 0 10px; }
@@ -59,6 +105,8 @@ ul.units li { margin: 0 0 10px; }
 .unit-link.done { border-color: #bfe2cd; }
 .unit-link.locked { opacity: .55; cursor: not-allowed; }
 
+/* ---------- Controles ---------- */
+
 button {
   font: inherit; border: 1px solid var(--brand); background: var(--brand);
   color: var(--brand-ink); border-radius: 8px; padding: 9px 14px; cursor: pointer;
@@ -67,8 +115,15 @@ button.ghost { background: transparent; color: var(--brand); }
 button:disabled { opacity: .55; cursor: not-allowed; }
 
 .field { margin: 12px 0; }
-.opt { display: block; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; margin: 6px 0; cursor: pointer; background: #fff; }
-.opt:hover { border-color: var(--brand); }
+.opt {
+  display: block; padding: 8px 10px; border: 1px solid var(--line);
+  border-radius: 8px; margin: 6px 0; cursor: pointer; background: #fff;
+}
+.opt:hover { border-color: var(--blue); }
+
+input[type="text"] { font: inherit; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; }
+
+/* ---------- Estados ---------- */
 
 .status { font-size: .92rem; padding: 10px 12px; border-radius: 8px; margin: 12px 0; }
 .status.ok { background: #e8f5ee; color: var(--ok); }
@@ -77,13 +132,34 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 
 .progress { height: 8px; background: var(--line); border-radius: 999px; overflow: hidden; margin: 10px 0 4px; }
 .progress > span { display: block; height: 100%; background: var(--brand); }
+.progress > span.full { background: var(--green); }
+
+/* ---------- Certificado ---------- */
 
 .cert {
   border: 3px double var(--brand); border-radius: 12px; padding: 32px;
   text-align: center; background: #fff;
 }
 .cert .code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 1.1rem; letter-spacing: .08em; }
+.cert .rule { height: 4px; display: flex; margin: 14px auto; max-width: 260px; border-radius: 999px; overflow: hidden; }
+.cert .rule span { flex: 1; }
+
+/* ---------- Rodapé ---------- */
+
+.foot {
+  border-top: 1px solid var(--line);
+  background: var(--card);
+  margin-top: 40px;
+}
+.foot .wrap { padding: 22px 20px 28px; }
+.foot-logos { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+.foot-logos img { height: 42px; width: auto; }
+.foot p { color: var(--muted); font-size: .8rem; margin: 14px 0 0; }
+
+/* ---------- Utilidades ---------- */
 
 .muted { color: var(--muted); }
 .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-input[type="text"] { font: inherit; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; }
+@media print {
+  .top, .foot, .stripe, button, .muted.print-hide { display: none !important; }
+}

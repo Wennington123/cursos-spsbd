@@ -1,6 +1,6 @@
-import { course } from "../lib/courses.mjs";
-import CourseHome from "./components/CourseHome";
+import { courses, courseMeta } from "../lib/courses.mjs";
+import CourseCatalog from "./components/CourseCatalog";
 
 export default function Page() {
-  return <CourseHome course={course} />;
+  return <CourseCatalog courses={courses.map(courseMeta)} />;
 }

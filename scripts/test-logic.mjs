@@ -1,7 +1,14 @@
 import assert from "node:assert/strict";
-import { course } from "../lib/courses.mjs";
-import { answerKey } from "../lib/answers.mjs";
-import { gradeUnit, unitStates, isCourseComplete, completedUnitIds, PASS_THRESHOLD } from "../lib/course-logic.mjs";
+import { courses } from "../lib/courses.mjs";
+import {
+  gradeUnit,
+  unitStates,
+  isCourseComplete,
+  completedUnitIds,
+  courseStats,
+  unitKey,
+  PASS_THRESHOLD,
+} from "../lib/course-logic.mjs";
 
 let n = 0;
 function test(name, fn) {
@@ -10,88 +17,142 @@ function test(name, fn) {
   console.log("ok -", name);
 }
 
-const u1 = course.units[0];
-const u2 = course.units[1];
+const allUnits = courses.flatMap((c) => c.units.map((u) => ({ course: c, unit: u })));
 
-test("gabarito cobre todas as unidades e questões", () => {
-  for (const u of course.units) {
-    assert.ok(answerKey[u.id], `sem gabarito para ${u.id}`);
-    for (const q of u.quiz) {
-      assert.ok(Number.isInteger(answerKey[u.id][q.id]), `sem resposta para ${u.id}/${q.id}`);
-      assert.ok(answerKey[u.id][q.id] >= 0 && answerKey[u.id][q.id] < q.options.length, `índice inválido em ${u.id}/${q.id}`);
+test("ha 4 cursos com unidades", () => {
+  assert.equal(courses.length, 4);
+  for (const c of courses) {
+    assert.ok(c.id && c.slug && c.title && c.subtitle && c.audience && c.workload, `curso incompleto: ${c.id}`);
+    assert.ok(c.units.length > 0, `curso sem unidades: ${c.slug}`);
+  }
+});
+
+test("slug de curso e unico", () => {
+  const slugs = courses.map((c) => c.slug);
+  assert.equal(new Set(slugs).size, slugs.length);
+});
+
+test("id e slug de unidade sao unicos dentro do curso", () => {
+  for (const c of courses) {
+    const ids = c.units.map((u) => u.id);
+    const slugs = c.units.map((u) => u.slug);
+    assert.equal(new Set(ids).size, ids.length, `ids duplicados em ${c.slug}`);
+    assert.equal(new Set(slugs).size, slugs.length, `slugs duplicados em ${c.slug}`);
+  }
+});
+
+test("toda unidade tem objetivos, conteudo e 3 questoes de 4 alternativas", () => {
+  for (const { course, unit } of allUnits) {
+    const where = `${course.slug}/${unit.id}`;
+    assert.ok(unit.title, `sem titulo: ${where}`);
+    assert.ok(Array.isArray(unit.objectives) && unit.objectives.length >= 3, `objetivos: ${where}`);
+    assert.ok(typeof unit.contentHtml === "string" && unit.contentHtml.length > 200, `conteudo: ${where}`);
+    assert.equal(unit.quiz.length, 3, `quiz deveria ter 3 questoes: ${where}`);
+    const qids = unit.quiz.map((q) => q.id);
+    assert.deepEqual(qids, ["q1", "q2", "q3"], `ids de questao: ${where}`);
+    for (const q of unit.quiz) {
+      assert.equal(q.options.length, 4, `alternativas em ${where}/${q.id}`);
+      assert.ok(q.question.endsWith("?") || q.question.length > 10, `enunciado em ${where}/${q.id}`);
     }
   }
 });
 
-test("quiz só do cliente não contém o gabarito", () => {
-  const raw = JSON.stringify(course);
-  assert.ok(!raw.includes("answerKey"), "course não pode expor gabarito");
-  for (const u of course.units) {
-    for (const q of u.quiz) {
-      assert.deepEqual(Object.keys(q).sort(), ["id", "options", "question"]);
+test("gabarito cobre todas as unidades com indice valido", () => {
+  for (const { course, unit } of allUnits) {
+    const key = course.answers?.[unit.id];
+    assert.ok(key, `sem gabarito: ${course.slug}/${unit.id}`);
+    for (const q of unit.quiz) {
+      const idx = key[q.id];
+      assert.ok(Number.isInteger(idx), `indice ausente: ${course.slug}/${unit.id}/${q.id}`);
+      assert.ok(idx >= 0 && idx < q.options.length, `indice invalido: ${course.slug}/${unit.id}/${q.id}`);
     }
   }
 });
 
-test("100% correto aprova", () => {
-  const r = gradeUnit(u1, answerKey[u1.id], answerKey);
-  assert.equal(r.passed, true);
-  assert.equal(r.score, 1);
+test("gabarito nao tem unidades sobrando", () => {
+  for (const c of courses) {
+    const ids = new Set(c.units.map((u) => u.id));
+    for (const k of Object.keys(c.answers || {})) {
+      assert.ok(ids.has(k), `gabarito orfao em ${c.slug}: ${k}`);
+    }
+  }
 });
 
-test("abaixo do limite reprova", () => {
-  const wrong = {};
-  for (const q of u1.quiz) wrong[q.id] = (answerKey[u1.id][q.id] + 1) % q.options.length;
-  const r = gradeUnit(u1, wrong, answerKey);
-  assert.equal(r.passed, false);
-  assert.equal(r.correct, 0);
+test("100% correto aprova e 0% reprova", () => {
+  const { course, unit } = allUnits[0];
+  const ok = gradeUnit(unit, course.answers, course.answers[unit.id]);
+  assert.equal(ok.passed, true);
+  assert.equal(ok.score, 1);
+
+  const empty = gradeUnit(unit, course.answers, {});
+  assert.equal(empty.passed, false);
+  assert.equal(empty.correct, 0);
 });
 
-test("respostas vazias reprovam", () => {
-  const r = gradeUnit(u1, {}, answerKey);
-  assert.equal(r.correct, 0);
-  assert.equal(r.passed, false);
+test("limite de aprovacao e aplicado", () => {
+  const { course, unit } = allUnits[0];
+  const answers = { ...course.answers[unit.id] };
+  const first = unit.quiz[0];
+  answers[first.id] = (course.answers[unit.id][first.id] + 1) % first.options.length;
+  const r = gradeUnit(unit, course.answers, answers);
+  assert.equal(r.correct, unit.quiz.length - 1);
+  assert.equal(r.passed, (unit.quiz.length - 1) / unit.quiz.length >= PASS_THRESHOLD);
 });
 
-test("limite de aprovação é aplicado", () => {
-  const answers = { ...answerKey[u1.id] };
-  answers[u1.quiz[0].id] = (answerKey[u1.id][u1.quiz[0].id] + 1) % u1.quiz[0].options.length;
-  const r = gradeUnit(u1, answers, answerKey);
-  assert.equal(r.correct, u1.quiz.length - 1);
-  assert.equal(r.passed, (u1.quiz.length - 1) / u1.quiz.length >= PASS_THRESHOLD);
+test("progresso e isolado por curso (chave com prefixo)", () => {
+  const course = courses[0];
+  const other = courses[1];
+  const progress = { units: { [unitKey(course.slug, course.units[0].id)]: { completed: true } } };
+  assert.deepEqual(completedUnitIds(progress, course.slug), [course.units[0].id]);
+  assert.deepEqual(completedUnitIds(progress, other.slug), []);
 });
 
-test("primeira unidade liberada, demais bloqueadas sem conclusão", () => {
-  const s = unitStates(course.units, []);
+test("unidade marcada como nao concluida nao conta", () => {
+  const course = courses[0];
+  const progress = { units: { [unitKey(course.slug, course.units[0].id)]: { completed: false } } };
+  assert.deepEqual(completedUnitIds(progress, course.slug), []);
+});
+
+test("primeira unidade liberada, seguintes bloqueadas sem conclusao", () => {
+  const s = unitStates(courses[0].units, []);
   assert.equal(s[0].unlocked, true);
-  assert.equal(s[1].unlocked, false);
-  assert.equal(s[2].unlocked, false);
+  for (let i = 1; i < s.length; i++) assert.equal(s[i].unlocked, false);
 });
 
 test("concluir a anterior libera a seguinte", () => {
-  const s = unitStates(course.units, [u1.id]);
+  const c = courses[0];
+  const s = unitStates(c.units, [c.units[0].id]);
   assert.equal(s[0].completed, true);
   assert.equal(s[1].unlocked, true);
-  assert.equal(s[2].unlocked, false);
+  if (s[2]) assert.equal(s[2].unlocked, false);
 });
 
-test("progresso parcial não conclui o curso", () => {
-  const c = completedUnitIds({ units: { [u1.id]: { completed: true } } });
-  assert.deepEqual(c, [u1.id]);
-  assert.equal(isCourseComplete(course.units, c), false);
+test("conclusao exige todas as unidades do curso", () => {
+  const c = courses[0];
+  const partial = { units: { [unitKey(c.slug, c.units[0].id)]: { completed: true } } };
+  assert.equal(courseStats(c, partial).complete, false);
+
+  const full = { units: {} };
+  for (const u of c.units) full.units[unitKey(c.slug, u.id)] = { completed: true };
+  const st = courseStats(c, full);
+  assert.equal(st.count, c.units.length);
+  assert.equal(st.complete, true);
+  assert.equal(isCourseComplete(c.units, st.completed), true);
 });
 
-test("todas as unidades concluídas fecham o curso", () => {
-  const units = {};
-  for (const u of course.units) units[u.id] = { completed: true };
-  const c = completedUnitIds({ units });
-  assert.equal(c.length, course.units.length);
-  assert.equal(isCourseComplete(course.units, c), true);
+test("progresso de um curso nao conclui outro", () => {
+  const c0 = courses[0];
+  const c1 = courses[1];
+  const progress = { units: {} };
+  for (const u of c0.units) progress.units[unitKey(c0.slug, u.id)] = { completed: true };
+  assert.equal(courseStats(c0, progress).complete, true);
+  assert.equal(courseStats(c1, progress).complete, false);
 });
 
-test("unidade marcada como não concluída não conta", () => {
-  const c = completedUnitIds({ units: { [u2.id]: { completed: false } } });
-  assert.equal(c.length, 0);
+test("total de unidades do programa", () => {
+  console.log(`\n  cursos: ${courses.length} | unidades: ${allUnits.length}`);
+  for (const c of courses) console.log(`   ${c.id} ${c.slug}: ${c.units.length} unidades`);
+  assert.ok(allUnits.length >= 20);
 });
 
 console.log(`\n${n} testes passaram.`);

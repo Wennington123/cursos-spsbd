@@ -48,6 +48,10 @@ export default function RootLayout({ children }) {
               Plataforma de formação autoinstrucional do SPSBD-GC. Conteúdo baseado nos cadernos do
               Serviço de Proteção Social Básica no Domicílio para Gestantes e Crianças de 0 a 6 anos.
             </p>
+            <p className="creditos">
+              Desenvolvido de forma independente por{" "}
+              <strong>Wennington Dias Aquino</strong>, técnico social.
+            </p>
           </div>
         </footer>
       </body>

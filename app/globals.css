@@ -202,6 +202,10 @@ input[type="text"] { font: inherit; padding: 9px 12px; border: 1px solid var(--l
 .foot-logos { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
 .foot-logos img { height: 42px; width: auto; }
 .foot p { color: var(--muted); font-size: .8rem; margin: 14px 0 0; }
+.foot .creditos {
+  color: var(--navy); font-size: .9rem;
+  margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line);
+}
 
 /* ---------- Utilidades ---------- */
 

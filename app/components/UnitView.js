@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { gradeUnit, unitKey, courseStats, unitStates } from "../../lib/course-logic.mjs";
 import { firebaseEnabled, saveUnitCompletion } from "../../lib/firebaseClient.mjs";
+import { renderContent } from "../../lib/asset.mjs";
 import { useAuth } from "./useAuth";
 import { useProgress } from "./useProgress";
 
@@ -60,7 +61,7 @@ export default function UnitView({ course, unit }) {
         </div>
       )}
 
-      <article dangerouslySetInnerHTML={{ __html: unit.contentHtml }} />
+      <article dangerouslySetInnerHTML={{ __html: renderContent(unit.contentHtml) }} />
 
       <h2>Avaliação</h2>
 

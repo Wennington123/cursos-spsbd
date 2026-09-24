@@ -1,0 +1,7 @@
+Mídia das unidades (imagens e vídeos).
+
+Organize por curso: curso-1/, curso-2/, curso-3/, curso-4/.
+No conteúdo das unidades, referencie com o marcador {{media}}:
+  <img src="{{media}}/curso-1/segurancas.png" alt="..." />
+
+Veja docs/midia.md para a convenção completa e as sugestões com prompts.

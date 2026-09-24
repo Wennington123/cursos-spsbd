@@ -105,6 +105,19 @@ ul.units li { margin: 0 0 10px; }
 .unit-link.done { border-color: #bfe2cd; }
 .unit-link.locked { opacity: .55; cursor: not-allowed; }
 
+/* ---------- Mídia nas unidades ---------- */
+
+figure.media { margin: 22px 0; }
+figure.media img,
+figure.media video {
+  width: 100%; height: auto; display: block;
+  border-radius: 10px; border: 1px solid var(--line); background: #fff;
+}
+figure.media figcaption {
+  color: var(--muted); font-size: .85rem; margin-top: 8px;
+}
+.galeria { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+
 /* ---------- Controles ---------- */
 
 button {

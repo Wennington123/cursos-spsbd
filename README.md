@@ -71,6 +71,20 @@ Paleta derivada das logos institucionais (SPSBD-GC, CRAS e Secretaria de Assist�
 azul-marinho escuro para texto, com acentos em azul, verde, amarelo, laranja, vermelho, magenta e
 roxo. O cabeçalho exibe a logo do SPSBD-GC e uma faixa colorida; o rodapé traz CRAS e a Secretaria.
 
+## Mídia das unidades
+
+Imagens e vídeos ficam em `public/midia/curso-N/` e são referenciados no conteúdo com o marcador
+`{{media}}`, que respeita o `basePath` do GitHub Pages:
+
+```html
+<figure class="media">
+  <img src="{{media}}/curso-1/segurancas.png" alt="Descrição da imagem" />
+  <figcaption>Legenda.</figcaption>
+</figure>
+```
+
+Sugestões de imagens e vídeos por unidade, com prompts para geração: **`docs/midia.md`**.
+
 ## Setup do Firebase
 
 1. Crie um projeto no [console do Firebase](https://console.firebase.google.com/).

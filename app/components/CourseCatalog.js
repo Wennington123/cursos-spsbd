@@ -5,6 +5,7 @@ import { useAuth } from "./useAuth";
 import { useProgress } from "./useProgress";
 import { courseStats } from "../../lib/course-logic.mjs";
 import { firebaseEnabled } from "../../lib/firebaseClient.mjs";
+import { asset } from "../../lib/asset.mjs";
 
 const ACCENTS = ["accent-blue", "accent-green", "accent-yellow", "accent-magenta"];
 
@@ -44,6 +45,26 @@ export default function CourseCatalog({ courses }) {
           </p>
         </>
       )}
+
+      <section className="card accent-yellow">
+        <h2>Antes de começar: de programa a serviço</h2>
+        <p>
+          O Programa Criança Feliz passou a integrar o SUAS como um serviço continuado: o Serviço de
+          Proteção Social Básica no Domicílio para Gestantes e Crianças de 0 a 6 anos (SPSBD-GC),
+          articulado ao PAIF e aos demais serviços do CRAS. Passar de <strong>programa</strong> para{" "}
+          <strong>serviço</strong> reforça o caráter estruturante da proteção e supera a lógica de
+          programas paralelos e focalizados.
+        </p>
+        <figure className="media vertical">
+          <video
+            controls
+            preload="metadata"
+            playsinline
+            src={asset("/midia/preambulo/crianca-feliz-para-spsbd-gc.mp4")}
+          />
+          <figcaption>Como o Programa Criança Feliz passou a ser um serviço do CRAS.</figcaption>
+        </figure>
+      </section>
 
       {courses.map((c, i) => {
         const st = courseStats(c, progress);

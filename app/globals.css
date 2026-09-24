@@ -118,6 +118,12 @@ figure.media figcaption {
 }
 .galeria { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
 
+/* Vídeo ou imagem vertical (reels): limita a largura para não ocupar a tela toda */
+figure.media.vertical { max-width: 380px; margin-left: auto; margin-right: auto; }
+@media (max-width: 520px) {
+  figure.media.vertical { max-width: 100%; }
+}
+
 /* ---------- Controles ---------- */
 
 button {

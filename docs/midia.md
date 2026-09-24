@@ -45,6 +45,25 @@ já com o `basePath` do GitHub Pages. **Nunca** escreva `/midia/...` direto, sen
 Onde inserir no código: dentro do `contentHtml` da unidade, em
 `plataforma/lib/courses/curso-N.mjs`. Cole o bloco entre as seções `<h3>` onde ele ajuda a explicar.
 
+**Vídeo longo, hospedado no YouTube** (evita carregar dezenas de MB no repositório)
+
+```html
+<figure class="media">
+  <div class="video-embed">
+    <iframe
+      src="https://www.youtube-nocookie.com/embed/CODIGO_DO_VIDEO"
+      title="Título do vídeo"
+      loading="lazy"
+      allowfullscreen
+    ></iframe>
+  </div>
+  <figcaption>Título — vídeo do canal Nome do Canal.</figcaption>
+</figure>
+```
+
+Use o domínio `youtube-nocookie.com` (não carrega cookies de rastreamento antes do play) e sempre
+credite o canal na legenda. O `video-embed` mantém a proporção 16:9 em qualquer tela.
+
 ---
 
 ## 2. Bloco de estilo — cole no início de **todo** prompt

@@ -78,7 +78,7 @@ Imagens e vídeos ficam em `public/midia/curso-N/` e são referenciados no conte
 
 ```html
 <figure class="media">
-  <img src="{{media}}/curso-1/segurancas.png" alt="Descrição da imagem" />
+  <img src="{{media}}/curso-1/segurancas.webp" alt="Descrição da imagem" />
   <figcaption>Legenda.</figcaption>
 </figure>
 ```

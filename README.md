@@ -114,13 +114,15 @@ npm run serve             # serve out/ localmente
 4. O `deploy.yml` builda e publica `out/` a cada push na `main`.
 5. `public/.nojekyll` já existe, para o Pages não ignorar a pasta `_next`.
 
-### Domínio próprio (spsbdgccursos.org.br)
+### Domínio próprio
 
-O site é servido na **raiz** do domínio, então **não** se define `NEXT_PUBLIC_BASE_PATH`.
-O arquivo `public/CNAME` registra o domínio no repositório, mas quem configura de fato é
-**Settings → Pages → Custom domain** (com publicação por Actions, o GitHub usa essa configuração).
+Enquanto o site é servido em `usuario.github.io/repo`, o build usa `NEXT_PUBLIC_BASE_PATH=/repo`
+(definido no workflow). Ao ligar um domínio próprio, o site passa a ser servido na **raiz**, e aí a
+linha do `NEXT_PUBLIC_BASE_PATH` deve ser **removida** do `deploy.yml`, e o arquivo `public/CNAME`
+criado com o domínio. Quem configura de fato é **Settings → Pages → Custom domain** (com publicação
+por Actions, o GitHub usa essa configuração).
 
-Registros DNS no provedor do domínio (ex.: Umbler):
+Registros DNS no provedor do domínio:
 
 | Tipo | Nome | Valor |
 |------|------|-------|
@@ -134,7 +136,7 @@ IPv6 é opcional: `AAAA` em `@` para `2606:50c0:8000::153`, `2606:50c0:8001::153
 `2606:50c0:8002::153` e `2606:50c0:8003::153`. Remova registros padrão do provedor que apontem
 para outro destino, e depois ligue **Enforce HTTPS** no Pages.
 
-Com domínio próprio, adicione `spsbdgccursos.org.br` (e `www.spsbdgccursos.org.br`) em
+Com domínio próprio, adicione o domínio (e a variante `www`) em
 **Authentication → Settings → Authorized domains** no Firebase, senão o login por popup falha.
 
 ## Prova focada

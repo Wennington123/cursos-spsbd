@@ -27,11 +27,13 @@ jobs:
 
       - run: npm ci
 
-      # Com domínio próprio (spsbdgccursos.org.br) o site fica na raiz, então NÃO
-      # se define NEXT_PUBLIC_BASE_PATH. Ele só é necessário em usuario.github.io/repo.
+      # Enquanto não houver domínio próprio configurado, o site é servido em
+      # usuario.github.io/repo e precisa do basePath. Ao ligar o domínio próprio,
+      # remova esta linha (o site passa a ser servido na raiz).
       # Os valores NEXT_PUBLIC_* são públicos: ficam em Variables, não em Secrets.
       - run: npm run build
         env:
+          NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
           NEXT_PUBLIC_FIREBASE_API_KEY: ${{ vars.NEXT_PUBLIC_FIREBASE_API_KEY }}
           NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ vars.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
           NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ vars.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}

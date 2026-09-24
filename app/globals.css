@@ -131,6 +131,21 @@ figure.media.vertical { max-width: 380px; margin-left: auto; margin-right: auto;
 }
 .video-embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 
+/* Áudio (podcast), com opção de baixar para ouvir offline */
+figure.media.audio .audio-block {
+  border: 1px solid var(--line); border-radius: 10px;
+  background: var(--card); padding: 16px 18px;
+}
+figure.media.audio audio { width: 100%; display: block; margin-bottom: 12px; }
+figure.media.audio .audio-titulo { margin: 0 0 8px; }
+figure.media.audio .audio-dica { color: var(--muted); font-size: .88rem; margin: 0 0 14px; }
+a.botao-baixar {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--brand); color: #fff; text-decoration: none;
+  border-radius: 8px; padding: 9px 14px; font-weight: 600;
+}
+a.botao-baixar:hover { filter: brightness(1.1); }
+
 /* ---------- Controles ---------- */
 
 button {

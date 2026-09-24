@@ -1,6 +1,7 @@
 "use client";
 
 import { signInWithGoogle, signOut } from "../../lib/firebaseClient.mjs";
+import { asset } from "../../lib/asset.mjs";
 import { useAuth } from "./useAuth";
 
 export default function UserBar() {
@@ -14,7 +15,8 @@ export default function UserBar() {
   }
   if (!user) {
     return (
-      <button onClick={() => signInWithGoogle().catch(() => {})}>
+      <button className="btn-google" onClick={() => signInWithGoogle().catch(() => {})}>
+        <img src={asset("/logos/google.png")} alt="" aria-hidden="true" />
         Entrar com Google
       </button>
     );

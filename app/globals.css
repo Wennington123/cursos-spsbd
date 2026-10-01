@@ -90,6 +90,8 @@ h3 { font-size: 1.05rem; margin: 22px 0 6px; color: var(--navy); }
 .course-card { display: block; text-decoration: none; color: inherit; }
 .course-card h2 { margin: 0 0 4px; }
 .course-card .meta { color: var(--muted); font-size: .88rem; margin: 0 0 10px; }
+.card.bloqueado { opacity: .6; }
+.card.bloqueado .course-card { cursor: not-allowed; }
 
 /* ---------- Listas ---------- */
 

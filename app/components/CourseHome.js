@@ -3,14 +3,29 @@
 import Link from "next/link";
 import { useAuth } from "./useAuth";
 import { useProgress } from "./useProgress";
-import { courseStats, unitStates } from "../../lib/course-logic.mjs";
+import { courseStats, courseStates, unitStates } from "../../lib/course-logic.mjs";
 import { firebaseEnabled } from "../../lib/firebaseClient.mjs";
 
-export default function CourseHome({ course }) {
+export default function CourseHome({ course, catalogo }) {
   const { user, enabled } = useAuth();
   const progress = useProgress(user);
   const st = courseStats(course, progress);
   const states = unitStates(course.units, st.completed);
+  const meuCurso = courseStates(catalogo, progress).find((c) => c.slug === course.slug);
+  const bloqueado = meuCurso ? !meuCurso.unlocked : false;
+
+  if (bloqueado) {
+    return (
+      <>
+        <p className="muted"><Link href="/">← Todos os cursos</Link></p>
+        <h1>{course.title}</h1>
+        <p className="lede">{course.subtitle} — {course.audience} · {course.workload}</p>
+        <div className="status warn">
+          Este curso está bloqueado. Conclua o curso anterior por inteiro para liberá-lo.
+        </div>
+      </>
+    );
+  }
 
   return (
     <>

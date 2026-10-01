@@ -10,5 +10,5 @@ export default async function Page({ params }) {
   const { course } = await params;
   const data = getCourse(course);
   if (!data) notFound();
-  return <CourseHome course={courseMeta(data)} />;
+  return <CourseHome course={courseMeta(data)} catalogo={courses.map(courseMeta)} />;
 }

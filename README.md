@@ -21,7 +21,9 @@ Total: **31 unidades**. Os cursos são independentes entre si; recomenda-se come
 2. O aluno entra com a conta Google.
 3. Em cada unidade, o aluno lê o conteúdo e responde 3 questões, com correção imediata.
 4. O progresso persiste entre recargas e dispositivos (Firestore, por conta).
-5. A unidade seguinte só libera após concluir a anterior; a primeira de cada curso é livre.
+5. Os cursos liberam em sequência: o primeiro é livre e cada um seguinte só abre quando o anterior
+   é concluído por inteiro. Dentro do curso, vale o mesmo: a unidade seguinte só libera após
+   concluir a anterior.
 6. Ao concluir todas as unidades de um curso, o aluno emite um certificado com código de verificação,
    conferível na página pública `/verificar/`.
 7. O site é 100% estático e publicável no GitHub Pages.

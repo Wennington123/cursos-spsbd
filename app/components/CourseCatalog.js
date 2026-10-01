@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "./useAuth";
 import { useProgress } from "./useProgress";
-import { courseStats } from "../../lib/course-logic.mjs";
+import { courseStates } from "../../lib/course-logic.mjs";
 import { firebaseEnabled } from "../../lib/firebaseClient.mjs";
 import { asset } from "../../lib/asset.mjs";
 
@@ -12,8 +12,9 @@ const ACCENTS = ["accent-blue", "accent-green", "accent-yellow", "accent-magenta
 export default function CourseCatalog({ courses }) {
   const { user, enabled } = useAuth();
   const progress = useProgress(user);
-  const totalUnits = courses.reduce((n, c) => n + c.units.length, 0);
-  const doneUnits = courses.reduce((n, c) => n + courseStats(c, progress).count, 0);
+  const estados = courseStates(courses, progress);
+  const totalUnits = estados.reduce((n, c) => n + c.total, 0);
+  const doneUnits = estados.reduce((n, c) => n + c.count, 0);
 
   return (
     <>
@@ -66,26 +67,40 @@ export default function CourseCatalog({ courses }) {
         </figure>
       </section>
 
-      {courses.map((c, i) => {
-        const st = courseStats(c, progress);
+      {estados.map((c, i) => {
+        const blocos = (
+          <>
+            <h2>{c.title}</h2>
+            <p className="meta">
+              {c.subtitle} · {c.audience} · {c.workload}
+            </p>
+            <div className="progress" aria-hidden="true">
+              <span
+                className={c.complete ? "full" : ""}
+                style={{ width: `${c.total ? (c.count / c.total) * 100 : 0}%` }}
+              />
+            </div>
+            <p className="muted" style={{ margin: "4px 0 0", fontSize: ".85rem" }}>
+              {c.count} de {c.total} unidades
+              {c.complete ? " · concluído" : c.unlocked ? "" : " · bloqueado"}
+            </p>
+          </>
+        );
         return (
-          <div className={`card ${ACCENTS[i % ACCENTS.length]}`} key={c.id}>
-            <Link className="course-card" href={`/curso/${c.slug}`}>
-              <h2>{c.title}</h2>
-              <p className="meta">
-                {c.subtitle} · {c.audience} · {c.workload}
-              </p>
-              <div className="progress" aria-hidden="true">
-                <span
-                  className={st.complete ? "full" : ""}
-                  style={{ width: `${st.total ? (st.count / st.total) * 100 : 0}%` }}
-                />
+          <div
+            className={`card ${ACCENTS[i % ACCENTS.length]}${c.unlocked ? "" : " bloqueado"}`}
+            key={c.id}
+          >
+            {c.unlocked ? (
+              <Link className="course-card" href={`/curso/${c.slug}`}>{blocos}</Link>
+            ) : (
+              <div className="course-card">
+                {blocos}
+                <p className="muted" style={{ margin: "8px 0 0", fontSize: ".85rem" }}>
+                  Conclua o curso anterior para liberar este.
+                </p>
               </div>
-              <p className="muted" style={{ margin: "4px 0 0", fontSize: ".85rem" }}>
-                {st.count} de {st.total} unidades
-                {st.complete ? " · concluído" : ""}
-              </p>
-            </Link>
+            )}
           </div>
         );
       })}

@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { gradeUnit, unitKey, courseStats, unitStates } from "../../lib/course-logic.mjs";
+import { gradeUnit, unitKey, courseStats, courseStates, unitStates } from "../../lib/course-logic.mjs";
 import { firebaseEnabled, saveUnitCompletion } from "../../lib/firebaseClient.mjs";
 import { renderContent } from "../../lib/asset.mjs";
 import { useAuth } from "./useAuth";
 import { useProgress } from "./useProgress";
 
-export default function UnitView({ course, unit }) {
+export default function UnitView({ course, unit, catalogo }) {
   const { user, enabled } = useAuth();
   const progress = useProgress(user);
   const st = courseStats(course, progress);
@@ -16,6 +16,8 @@ export default function UnitView({ course, unit }) {
   const me = states.find((s) => s.id === unit.id);
   const index = course.units.findIndex((u) => u.id === unit.id);
   const next = course.units[index + 1];
+  const meuCurso = courseStates(catalogo, progress).find((c) => c.slug === course.slug);
+  const bloqueada = (meuCurso ? !meuCurso.unlocked : false) || (me ? !me.unlocked : false);
 
   const [answers, setAnswers] = useState({});
   const [result, setResult] = useState(null);
@@ -55,9 +57,11 @@ export default function UnitView({ course, unit }) {
         </ul>
       </div>
 
-      {me && !me.unlocked && (
+      {bloqueada && (
         <div className="status warn">
-          Esta unidade está bloqueada. Conclua a unidade anterior para liberá-la.
+          {meuCurso && !meuCurso.unlocked
+            ? "Este curso está bloqueado. Conclua o curso anterior por inteiro para liberá-lo."
+            : "Esta unidade está bloqueada. Conclua a unidade anterior para liberá-la."}
         </div>
       )}
 
@@ -85,7 +89,7 @@ export default function UnitView({ course, unit }) {
       )}
       {error && <div className="status err">{error}</div>}
 
-      {enabled && user && !alreadyDone && (
+      {enabled && user && !alreadyDone && !bloqueada && (
         <form onSubmit={submit}>
           {unit.quiz.map((q) => (
             <div className="field" key={q.id}>

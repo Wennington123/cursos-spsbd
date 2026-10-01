@@ -23,6 +23,7 @@ export default async function Page({ params }) {
         contentHtml: found.contentHtml,
         quiz: found.quiz,
       }}
+      catalogo={courses.map(courseMeta)}
     />
   );
 }

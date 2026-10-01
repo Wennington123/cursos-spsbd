@@ -6,6 +6,7 @@ import {
   isCourseComplete,
   completedUnitIds,
   courseStats,
+  courseStates,
   unitKey,
   PASS_THRESHOLD,
 } from "../lib/course-logic.mjs";
@@ -147,6 +148,45 @@ test("progresso de um curso nao conclui outro", () => {
   for (const u of c0.units) progress.units[unitKey(c0.slug, u.id)] = { completed: true };
   assert.equal(courseStats(c0, progress).complete, true);
   assert.equal(courseStats(c1, progress).complete, false);
+});
+
+test("sem progresso, so o primeiro curso fica liberado", () => {
+  const estados = courseStates(courses, { units: {} });
+  assert.equal(estados.length, courses.length);
+  assert.equal(estados[0].unlocked, true);
+  for (let i = 1; i < estados.length; i++) assert.equal(estados[i].unlocked, false);
+});
+
+test("concluir um curso libera o seguinte, e so ele", () => {
+  const progress = { units: {} };
+  for (const u of courses[0].units) progress.units[unitKey(courses[0].slug, u.id)] = { completed: true };
+
+  const estados = courseStates(courses, progress);
+  assert.equal(estados[0].complete, true);
+  assert.equal(estados[1].unlocked, true);
+  if (estados[2]) assert.equal(estados[2].unlocked, false);
+});
+
+test("curso parcialmente concluido nao libera o seguinte", () => {
+  const progress = { units: {} };
+  const unidades = courses[0].units;
+  for (const u of unidades.slice(0, unidades.length - 1)) {
+    progress.units[unitKey(courses[0].slug, u.id)] = { completed: true };
+  }
+
+  const estados = courseStates(courses, progress);
+  assert.equal(estados[0].complete, false);
+  assert.equal(estados[1].unlocked, false);
+});
+
+test("progresso de um curso nao abre os demais em cascata", () => {
+  const progress = { units: {} };
+  for (const u of courses[1].units) progress.units[unitKey(courses[1].slug, u.id)] = { completed: true };
+
+  const estados = courseStates(courses, progress);
+  assert.equal(estados[1].complete, true);
+  assert.equal(estados[0].unlocked, true);
+  assert.equal(estados[2].unlocked, false);
 });
 
 test("total de unidades do programa", () => {

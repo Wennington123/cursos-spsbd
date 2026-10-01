@@ -10,7 +10,7 @@ import { useProgress } from "./useProgress";
 
 export default function UnitView({ course, unit, catalogo }) {
   const { user, enabled } = useAuth();
-  const progress = useProgress(user);
+  const { progress, erro: erroProgresso } = useProgress(user);
   const st = courseStats(course, progress);
   const states = unitStates(course.units, st.completed);
   const me = states.find((s) => s.id === unit.id);
@@ -62,6 +62,12 @@ export default function UnitView({ course, unit, catalogo }) {
           {meuCurso && !meuCurso.unlocked
             ? "Este curso está bloqueado. Conclua o curso anterior por inteiro para liberá-lo."
             : "Esta unidade está bloqueada. Conclua a unidade anterior para liberá-la."}
+        </div>
+      )}
+
+      {erroProgresso && (
+        <div className="status err">
+          Não foi possível ler seu progresso no servidor: {erroProgresso}
         </div>
       )}
 

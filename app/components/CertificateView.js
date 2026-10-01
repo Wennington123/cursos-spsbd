@@ -4,12 +4,13 @@ import Link from "next/link";
 import { useState } from "react";
 import { issueCertificate } from "../../lib/firebaseClient.mjs";
 import { courseStats } from "../../lib/course-logic.mjs";
+import { asset } from "../../lib/asset.mjs";
 import { useAuth } from "./useAuth";
 import { useProgress } from "./useProgress";
 
 export default function CertificateView({ course }) {
   const { user, enabled } = useAuth();
-  const progress = useProgress(user);
+  const { progress } = useProgress(user);
   const st = courseStats(course, progress);
 
   const [cert, setCert] = useState(null);
@@ -20,7 +21,7 @@ export default function CertificateView({ course }) {
     setError("");
     setBusy(true);
     try {
-      setCert(await issueCertificate(user, course.id, course.title));
+      setCert(await issueCertificate(user, course));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -51,28 +52,49 @@ export default function CertificateView({ course }) {
 
       {cert && (
         <>
-          <div className="cert">
-            <p className="muted" style={{ margin: 0 }}>Certificado de conclusão</p>
-            <h2 style={{ margin: "10px 0" }}>{cert.name}</h2>
-            <p style={{ margin: "0 0 6px" }}>concluiu o curso</p>
-            <p><strong>{cert.course}</strong></p>
-            <div className="rule" aria-hidden="true">
-              <span style={{ background: "var(--blue)" }} />
-              <span style={{ background: "var(--green)" }} />
-              <span style={{ background: "var(--yellow)" }} />
-              <span style={{ background: "var(--orange)" }} />
-              <span style={{ background: "var(--red)" }} />
-              <span style={{ background: "var(--magenta)" }} />
-              <span style={{ background: "var(--purple)" }} />
+          <article className="cert">
+            <div className="cert-logo">
+              <img src={asset("/logos/spsbd-gc.png")} alt="SPSBD-GC — Serviço de Proteção Social Básica no Domicílio para Gestantes e Crianças de 0 a 6 anos" />
             </div>
-            <p className="muted" style={{ fontSize: ".85rem" }}>
-              Código de verificação: <span className="code">{cert.code}</span>
+
+            <p className="cert-etiqueta">Certificado de conclusão</p>
+
+            <h2 className="cert-nome">{cert.name}</h2>
+
+            <p className="cert-texto">
+              concluiu o curso <strong>{cert.course}</strong>, com carga horária de{" "}
+              <strong>{cert.cargaHoraria || course.cargaHoraria}</strong>, oferecido pela plataforma de
+              formação autoinstrucional do Serviço de Proteção Social Básica no Domicílio para Gestantes
+              e Crianças de 0 a 6 anos, no âmbito do Sistema Único de Assistência Social (SUAS).
             </p>
-          </div>
+
+            <p className="cert-data">
+              {cert.issuedAt
+                ? `Emitido em ${new Date(cert.issuedAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}`
+                : ""}
+            </p>
+
+            <div className="cert-assinatura">
+              <img src={asset("/assinatura.png")} alt={`Assinatura de Wennington Dias Aquino`} />
+              <span className="cert-linha" aria-hidden="true" />
+              <span className="cert-assinante">Wennington Dias Aquino</span>
+              <span className="cert-cargo">Técnico de Referência do SPSBD-GC — certificador</span>
+            </div>
+
+            <div className="cert-rodape">
+              <span className="cert-codigo">
+                Código de verificação: <span className="code">{cert.code}</span>
+              </span>
+              <span className="cert-nota">
+                Autenticidade conferível em /verificar/ · iniciativa independente, sem vínculo institucional.
+              </span>
+            </div>
+          </article>
+
           <p className="muted print-hide" style={{ fontSize: ".88rem" }}>
             Confirme em <Link href={`/verificar/?codigo=${cert.code}`}>/verificar/?codigo={cert.code}</Link>
             {" · "}
-            <button className="ghost" onClick={() => window.print()}>Imprimir</button>
+            <button className="ghost" onClick={() => window.print()}>Imprimir ou salvar em PDF</button>
           </p>
         </>
       )}

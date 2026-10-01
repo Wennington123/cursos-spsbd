@@ -5,20 +5,28 @@ import { firebaseEnabled, watchProgress } from "../../lib/firebaseClient.mjs";
 
 export function useProgress(user) {
   const [progress, setProgress] = useState({ units: {} });
+  const [erro, setErro] = useState(null);
 
   useEffect(() => {
     if (!firebaseEnabled || !user) {
       setProgress({ units: {} });
+      setErro(null);
       return;
     }
-    let unsub = () => {};
+
+    setErro(null);
+    let cancelar = () => {};
     try {
-      unsub = watchProgress(user.uid, setProgress);
-    } catch {
-      /* Firebase indisponível */
+      cancelar = watchProgress(
+        user.uid,
+        setProgress,
+        (e) => setErro(e?.message || String(e))
+      );
+    } catch (e) {
+      setErro(e?.message || String(e));
     }
-    return () => unsub();
+    return () => cancelar();
   }, [user]);
 
-  return progress;
+  return { progress, erro };
 }

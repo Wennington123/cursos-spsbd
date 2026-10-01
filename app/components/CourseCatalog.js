@@ -11,7 +11,7 @@ const ACCENTS = ["accent-blue", "accent-green", "accent-yellow", "accent-magenta
 
 export default function CourseCatalog({ courses }) {
   const { user, enabled } = useAuth();
-  const progress = useProgress(user);
+  const { progress } = useProgress(user);
   const estados = courseStates(courses, progress);
   const totalUnits = estados.reduce((n, c) => n + c.total, 0);
   const doneUnits = estados.reduce((n, c) => n + c.count, 0);

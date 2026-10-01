@@ -5,11 +5,11 @@ import { useEffect, useState } from "react";
 import { useAuth } from "./useAuth";
 import { useProgress } from "./useProgress";
 import { courseStates } from "../../lib/course-logic.mjs";
-import { firebaseEnabled, issueCertificate, getCertificate } from "../../lib/firebaseClient.mjs";
+import { firebaseEnabled, issueCertificate, getCertificate, projetoId } from "../../lib/firebaseClient.mjs";
 
 export default function PerfilView({ catalogo }) {
   const { user, ready, enabled } = useAuth();
-  const progress = useProgress(user);
+  const { progress, erro: erroProgresso } = useProgress(user);
   const estados = courseStates(catalogo, progress);
   const emitidos = progress?.certificates || {};
   const chaveCerts = Object.values(emitidos).sort().join(",");
@@ -45,7 +45,7 @@ export default function PerfilView({ catalogo }) {
     setErro("");
     setOcupado(curso.slug);
     try {
-      await issueCertificate(user, curso.id, curso.title);
+      await issueCertificate(user, curso);
     } catch (e) {
       setErro(e.message);
     } finally {
@@ -176,6 +176,24 @@ export default function PerfilView({ catalogo }) {
             ))}
         </>
       )}
+
+      <details className="card">
+        <summary style={{ cursor: "pointer", fontWeight: 600 }}>Diagnóstico da conta</summary>
+        <ul style={{ margin: "12px 0 0", paddingLeft: 20 }}>
+          <li>
+            Projeto Firebase: <code>{projetoId || "não configurado"}</code>
+          </li>
+          <li>
+            Sessão: {user.uid ? `ativa (${String(user.uid).slice(0, 8)}…)` : "sem sessão"}
+          </li>
+          <li>
+            Leitura do progresso no servidor:{" "}
+            {erroProgresso ? <strong style={{ color: "#a02020" }}>falhou — {erroProgresso}</strong> : "ok"}
+          </li>
+          <li>Unidades gravadas no seu documento: {Object.keys(progress?.units || {}).length}</li>
+          <li>Certificados registrados: {Object.keys(emitidos).length}</li>
+        </ul>
+      </details>
 
       <p className="muted" style={{ marginTop: 28, fontSize: ".88rem" }}>
         <Link href="/">← Voltar aos cursos</Link>

@@ -8,7 +8,7 @@ import { firebaseEnabled } from "../../lib/firebaseClient.mjs";
 
 export default function CourseHome({ course, catalogo }) {
   const { user, enabled } = useAuth();
-  const progress = useProgress(user);
+  const { progress } = useProgress(user);
   const st = courseStats(course, progress);
   const states = unitStates(course.units, st.completed);
   const meuCurso = courseStates(catalogo, progress).find((c) => c.slug === course.slug);

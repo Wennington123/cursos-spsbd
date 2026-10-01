@@ -194,12 +194,36 @@ input[type="text"] { font: inherit; padding: 9px 12px; border: 1px solid var(--l
 /* ---------- Certificado ---------- */
 
 .cert {
-  border: 3px double var(--brand); border-radius: 12px; padding: 32px;
-  text-align: center; background: #fff;
+  position: relative;
+  border: 3px double var(--brand); border-radius: 12px;
+  padding: 38px 44px 30px; text-align: center; background: #fff;
 }
-.cert .code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 1.1rem; letter-spacing: .08em; }
-.cert .rule { height: 4px; display: flex; margin: 14px auto; max-width: 260px; border-radius: 999px; overflow: hidden; }
-.cert .rule span { flex: 1; }
+.cert-logo img { height: 60px; width: auto; margin: 0 auto 18px; display: block; }
+.cert-etiqueta {
+  text-transform: uppercase; letter-spacing: .18em;
+  font-size: .78rem; color: var(--muted); margin: 0 0 14px;
+}
+.cert-nome {
+  font-size: 1.9rem; margin: 0 0 18px; color: var(--navy); line-height: 1.2;
+  display: inline-block; border-bottom: 2px solid var(--yellow); padding: 0 12px 6px;
+}
+.cert-texto { max-width: 620px; margin: 0 auto 18px; }
+.cert-data { color: var(--muted); font-size: .9rem; margin: 0 0 28px; }
+.cert-assinatura {
+  display: flex; flex-direction: column; align-items: center;
+  margin: 0 auto 28px; max-width: 320px;
+}
+.cert-assinatura img { height: 62px; width: auto; margin-bottom: -4px; }
+.cert-linha { display: block; width: 100%; border-top: 1px solid var(--navy); margin-bottom: 6px; }
+.cert-assinante { font-weight: 700; color: var(--navy); }
+.cert-cargo { color: var(--muted); font-size: .84rem; }
+.cert-rodape {
+  border-top: 1px solid var(--line); padding-top: 14px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.cert-codigo { font-size: .88rem; }
+.cert-nota { font-size: .74rem; color: var(--muted); }
+.cert .code { font-family: ui-monospace, Menlo, Consolas, monospace; letter-spacing: .08em; }
 
 /* ---------- Rodapé ---------- */
 

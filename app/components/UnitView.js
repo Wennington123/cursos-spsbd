@@ -83,11 +83,50 @@ export default function UnitView({ course, unit, catalogo }) {
       {result && (
         <div className={`status ${result.passed ? "ok" : "err"}`}>
           {result.passed
-            ? `Aprovado: ${result.correct}/${result.total} corretas. Unidade registrada.`
-            : `Ainda não: ${result.correct}/${result.total} corretas. Revise o conteúdo e tente novamente.`}
+            ? `Aprovado: ${result.correct}/${result.total} corretas. Unidade registrada. Veja o gabarito abaixo.`
+            : `Ainda não: ${result.correct}/${result.total} corretas. Veja o gabarito abaixo e tente novamente.`}
         </div>
       )}
       {error && <div className="status err">{error}</div>}
+
+      {(result || alreadyDone) && (
+        <section className="gabarito">
+          <h3>Gabarito</h3>
+          {unit.quiz.map((q) => {
+            const correta = course.answers[unit.id][q.id];
+            const marcada = answers[q.id] === undefined ? null : Number(answers[q.id]);
+            const acertou = marcada === correta;
+            return (
+              <div
+                className={`questao ${marcada === null ? "" : acertou ? "ok" : "err"}`}
+                key={q.id}
+              >
+                <p className="enunciado">
+                  <span className="marca" aria-hidden="true">
+                    {marcada === null ? "•" : acertou ? "✓" : "✗"}
+                  </span>{" "}
+                  {q.question}
+                </p>
+                <ul className="alternativas">
+                  {q.options.map((opt, i) => {
+                    const ehCorreta = i === correta;
+                    const foiMarcada = marcada !== null && i === marcada;
+                    const classe = ehCorreta ? "correta" : foiMarcada ? "marcada-errada" : "";
+                    return (
+                      <li className={classe} key={i}>
+                        {opt}
+                        {ehCorreta && <span className="etiqueta">correta</span>}
+                        {foiMarcada && !ehCorreta && <span className="etiqueta">sua resposta</span>}
+                      </li>
+                    );
+                  })}
+                </ul>
+                {q.explanation && <p className="explicacao">{q.explanation}</p>}
+              </div>
+            );
+          })}
+        </section>
+      )}
 
       {enabled && user && !alreadyDone && !bloqueada && (
         <form onSubmit={submit}>

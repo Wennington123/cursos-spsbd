@@ -150,6 +150,18 @@ test("progresso de um curso nao conclui outro", () => {
   assert.equal(courseStats(c1, progress).complete, false);
 });
 
+test("toda questao tem explicacao no gabarito", () => {
+  const faltando = [];
+  for (const { course, unit } of allUnits) {
+    for (const q of unit.quiz) {
+      if (typeof q.explanation !== "string" || q.explanation.trim().length < 15) {
+        faltando.push(`${course.slug}/${unit.id}/${q.id}`);
+      }
+    }
+  }
+  assert.deepEqual(faltando, [], "questoes sem explicacao: " + faltando.join(", "));
+});
+
 test("sem progresso, so o primeiro curso fica liberado", () => {
   const estados = courseStates(courses, { units: {} });
   assert.equal(estados.length, courses.length);

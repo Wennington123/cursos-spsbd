@@ -209,6 +209,52 @@ input[type="text"] { font: inherit; padding: 9px 12px; border: 1px solid var(--l
   margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line);
 }
 
+/* ---------- Gabarito da avaliação ---------- */
+
+.gabarito { margin: 24px 0 8px; }
+.questao {
+  border: 1px solid var(--line); border-radius: 10px;
+  padding: 14px 16px; margin: 12px 0; background: var(--card);
+}
+.questao.ok { border-left: 4px solid var(--ok); }
+.questao.err { border-left: 4px solid var(--red); }
+.questao .enunciado { margin: 0 0 10px; }
+.marca { font-weight: 700; }
+.questao.ok .marca { color: var(--ok); }
+.questao.err .marca { color: var(--red); }
+ul.alternativas { list-style: none; margin: 0; padding: 0; }
+ul.alternativas li {
+  padding: 7px 10px; border-radius: 8px; margin: 5px 0;
+  border: 1px solid var(--line); font-size: .95rem;
+  display: flex; align-items: baseline; gap: 10px; justify-content: space-between;
+}
+ul.alternativas li.correta { background: #e8f5ee; border-color: #bfe2cd; }
+ul.alternativas li.marcada-errada { background: #fdeaea; border-color: #f3c9c9; }
+.etiqueta {
+  font-size: .72rem; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--muted); white-space: nowrap;
+}
+ul.alternativas li.correta .etiqueta { color: var(--ok); }
+ul.alternativas li.marcada-errada .etiqueta { color: #a02020; }
+.explicacao {
+  margin: 10px 0 0; padding-top: 10px; border-top: 1px dashed var(--line);
+  color: var(--muted); font-size: .9rem;
+}
+
+/* ---------- Perfil ---------- */
+
+.perfil-cabecalho { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.perfil-cabecalho img { width: 56px; height: 56px; border-radius: 50%; }
+.perfil-cabecalho .nome { font-weight: 700; color: var(--navy); }
+.lista-certs { list-style: none; margin: 0; padding: 0; }
+.lista-certs li {
+  border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin: 8px 0;
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+}
+.lista-certs .codigo {
+  font-family: ui-monospace, Menlo, Consolas, monospace; letter-spacing: .06em;
+}
+
 /* ---------- Utilidades ---------- */
 
 .muted { color: var(--muted); }

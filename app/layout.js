@@ -1,6 +1,7 @@
 import Link from "next/link";
 import "./globals.css";
 import UserBar from "./components/UserBar";
+import NavLinks from "./components/NavLinks";
 import { asset } from "../lib/asset.mjs";
 
 export const metadata = {
@@ -25,6 +26,7 @@ export default function RootLayout({ children }) {
                 <small>Formação autoinstrucional</small>
               </span>
             </Link>
+            <NavLinks />
             <UserBar />
           </div>
           <div className="stripe" aria-hidden="true">

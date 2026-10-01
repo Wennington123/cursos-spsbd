@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { signInWithGoogle, signOut } from "../../lib/firebaseClient.mjs";
 import { asset } from "../../lib/asset.mjs";
 import { useAuth } from "./useAuth";
@@ -24,9 +23,7 @@ export default function UserBar() {
   }
   return (
     <span className="row" style={{ fontSize: ".9rem" }}>
-      <Link className="muted" href="/perfil/" title="Meu perfil">
-        {user.displayName || user.email}
-      </Link>
+      <span className="muted">{user.displayName || user.email}</span>
       <button className="ghost" onClick={() => signOut()}>Sair</button>
     </span>
   );

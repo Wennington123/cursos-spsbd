@@ -191,6 +191,14 @@ export default function PerfilView({ catalogo }) {
             {erroProgresso ? <strong style={{ color: "#a02020" }}>falhou — {erroProgresso}</strong> : "ok"}
           </li>
           <li>Unidades gravadas no seu documento: {Object.keys(progress?.units || {}).length}</li>
+          <li>
+            Chaves gravadas:{" "}
+            <code style={{ wordBreak: "break-all" }}>
+              {Object.entries(progress?.units || {})
+                .map(([chave, valor]) => `${chave}${valor?.completed ? "" : " (incompleta)"}`)
+                .join(" · ") || "nenhuma"}
+            </code>
+          </li>
           <li>Certificados registrados: {Object.keys(emitidos).length}</li>
         </ul>
       </details>

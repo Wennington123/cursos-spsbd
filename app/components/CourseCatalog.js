@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "./useAuth";
 import { useProgress } from "./useProgress";
 import { courseStates } from "../../lib/course-logic.mjs";
-import { firebaseEnabled } from "../../lib/firebaseClient.mjs";
+import { firebaseEnabled, migrarChavesAntigas } from "../../lib/firebaseClient.mjs";
 import { asset } from "../../lib/asset.mjs";
 
 const ACCENTS = ["accent-blue", "accent-green", "accent-yellow", "accent-magenta"];
@@ -15,6 +16,25 @@ export default function CourseCatalog({ courses }) {
   const estados = courseStates(courses, progress);
   const totalUnits = estados.reduce((n, c) => n + c.total, 0);
   const doneUnits = estados.reduce((n, c) => n + c.count, 0);
+  const tentouMigrar = useRef(false);
+  const [migradas, setMigradas] = useState(0);
+
+  // Recupera conclusões gravadas no formato antigo de chave (piloto).
+  useEffect(() => {
+    if (!firebaseEnabled || !user || tentouMigrar.current) return;
+    const unidades = progress?.units || {};
+    const temAntiga = Object.keys(unidades).some(
+      (chave) => !chave.includes("/") && unidades[chave]?.completed === true
+    );
+    if (!temAntiga) return;
+
+    tentouMigrar.current = true;
+    migrarChavesAntigas(user.uid, progress, courses)
+      .then((n) => {
+        if (n) setMigradas(n);
+      })
+      .catch(() => {});
+  }, [user, progress, courses]);
 
   return (
     <>
@@ -33,6 +53,13 @@ export default function CourseCatalog({ courses }) {
       {enabled && !user && (
         <div className="status warn">
           Entre com sua conta Google para salvar o progresso e emitir o certificado.
+        </div>
+      )}
+
+      {migradas > 0 && (
+        <div className="status ok">
+          Recuperamos {migradas} unidade(s) que estavam gravadas em um formato anterior. Seu progresso
+          foi atualizado.
         </div>
       )}
 

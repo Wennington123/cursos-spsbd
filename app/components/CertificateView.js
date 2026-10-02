@@ -109,7 +109,7 @@ export default function CertificateView({ course }) {
 
       {!configurado && (
         <div className="status warn print-hide">
-          Emissão indisponível: a identificação do emissor (nome e CNPJ) precisa ser conferida em
+          Emissão indisponível: a identificação de quem certifica (nome e função) precisa ser conferida em
           <code> lib/emissor.mjs</code>.
         </div>
       )}
@@ -181,7 +181,9 @@ export default function CertificateView({ course }) {
             <p className="cert-texto">
               concluiu o curso <strong>{cert.course}</strong>, com carga horária de{" "}
               <strong>{cert.cargaHoraria || course.cargaHoraria}</strong>, na modalidade autoinstrucional, no
-              período de <strong>{periodoBR(cert.periodoInicio, cert.periodoFim)}</strong>.
+              período de <strong>{periodoBR(cert.periodoInicio, cert.periodoFim)}</strong>, com certificação
+              emitida por <strong>{cert.emissor?.nome}</strong>
+              {cert.emissor?.cargo ? `, ${cert.emissor.cargo}` : ""}.
             </p>
 
             <section className="cert-ementa">
@@ -195,22 +197,17 @@ export default function CertificateView({ course }) {
 
             <div className="cert-baixo">
               <div className="cert-emissor">
-                <strong>{cert.emissor?.nome}</strong>
-                {cert.emissor?.documento && (
-                  <span>
-                    {cert.emissor.documentoTipo}: {cert.emissor.documento}
-                  </span>
-                )}
+                <strong>{cert.emissor?.vinculo}</strong>
                 {cert.emissor?.cidade && <span>{cert.emissor.cidade}</span>}
                 <span>Data de conclusão: {dataBR(cert.periodoFim || cert.issuedAt)}</span>
                 <span>Emitido em {dataBR(cert.issuedAt)}</span>
               </div>
 
               <div className="cert-assinatura">
-                <img src={asset("/assinatura.png")} alt="Assinatura do certificador" />
+                <img src={asset("/assinatura.png")} alt="Assinatura de quem certifica" />
                 <span className="cert-linha" aria-hidden="true" />
-                <span className="cert-assinante">{cert.responsavel?.nome}</span>
-                <span className="cert-cargo">{cert.responsavel?.cargo} — certificador</span>
+                <span className="cert-assinante">{cert.emissor?.nome}</span>
+                <span className="cert-cargo">{cert.emissor?.cargo} — certificador</span>
               </div>
             </div>
 

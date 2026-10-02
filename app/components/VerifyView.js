@@ -91,8 +91,8 @@ export default function VerifyView() {
 
           {state.emissor?.nome && (
             <p className="muted" style={{ margin: "10px 0 0", fontSize: ".85rem" }}>
-              {state.emissor.nome}
-              {state.emissor.documento ? ` · ${state.emissor.documentoTipo}: ${state.emissor.documento}` : ""}
+              Certificado por {state.emissor.nome}
+              {state.emissor.cargo ? ` — ${state.emissor.cargo}` : ""}
             </p>
           )}
 

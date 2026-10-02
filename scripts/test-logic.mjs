@@ -11,7 +11,7 @@ import {
   PASS_THRESHOLD,
 } from "../lib/course-logic.mjs";
 import { cnpjValido, cpfValido, formatarCPF, mascararCPF, nomeCompletoValido } from "../lib/documentos.mjs";
-import { documentoDoEmissor, emissor, emissorConfigurado } from "../lib/emissor.mjs";
+import { emissor, emissorConfigurado } from "../lib/emissor.mjs";
 
 let n = 0;
 function test(name, fn) {
@@ -246,13 +246,12 @@ test("nome completo exige ao menos duas palavras", () => {
   assert.equal(nomeCompletoValido("  "), false);
 });
 
-test("emissor do certificado esta configurado e com documento valido", () => {
-  assert.equal(emissorConfigurado(), true, "emissor incompleto em lib/emissor.mjs");
+test("quem certifica esta identificado por nome e funcao", () => {
+  assert.equal(emissorConfigurado(), true, "identificacao incompleta em lib/emissor.mjs");
   assert.ok(emissor.nome.length > 5);
-  assert.ok(emissor.responsavel.nome.length > 5);
-  const doc = documentoDoEmissor();
-  assert.ok(doc, "emissor sem CNPJ nem CPF do responsavel");
-  assert.equal(doc.tipo, "CNPJ");
+  assert.ok(emissor.cargo.length > 5);
+  assert.ok(emissor.vinculo.length > 5);
+  assert.ok(!/cnpj|\bcpf\b/i.test(emissor.nome + emissor.cargo), "quem certifica nao exibe CNPJ nem CPF");
 });
 
 test("ementa e gerada com todas as unidades do curso", () => {

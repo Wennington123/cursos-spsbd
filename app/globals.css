@@ -196,34 +196,70 @@ input[type="text"] { font: inherit; padding: 9px 12px; border: 1px solid var(--l
 .cert {
   position: relative;
   border: 3px double var(--brand); border-radius: 12px;
-  padding: 38px 44px 30px; text-align: center; background: #fff;
+  padding: 28px 34px 22px; text-align: center; background: #fff;
+  width: 100%; max-width: 1123px; margin: 0 auto; /* 1123px = A4 paisagem a 96 DPI */
 }
-.cert-logo img { height: 60px; width: auto; margin: 0 auto 18px; display: block; }
+
+.cert-logos { display: flex; align-items: center; justify-content: center; gap: 30px; flex-wrap: wrap; margin-bottom: 14px; }
+.cert-logos img { width: auto; display: block; }
+.cert-logo-servico { height: 46px; }
+.cert-logo-cras { height: 52px; }
+.cert-logo-prefeitura { height: 34px; }
+
 .cert-etiqueta {
   text-transform: uppercase; letter-spacing: .18em;
-  font-size: .78rem; color: var(--muted); margin: 0 0 14px;
+  font-size: .74rem; color: var(--muted); margin: 0 0 10px;
 }
 .cert-nome {
-  font-size: 1.9rem; margin: 0 0 18px; color: var(--navy); line-height: 1.2;
-  display: inline-block; border-bottom: 2px solid var(--yellow); padding: 0 12px 6px;
+  font-size: 1.8rem; margin: 0 0 4px; color: var(--navy); line-height: 1.15;
+  display: inline-block; border-bottom: 2px solid var(--yellow); padding: 0 12px 5px;
 }
-.cert-texto { max-width: 620px; margin: 0 auto 18px; }
-.cert-data { color: var(--muted); font-size: .9rem; margin: 0 0 28px; }
+.cert-cpf { font-size: .84rem; color: var(--muted); margin: 8px 0 14px; letter-spacing: .04em; }
+.cert-texto { max-width: 760px; margin: 0 auto 16px; font-size: .96rem; }
+.cert-texto strong { color: var(--navy); }
+
+.cert-ementa {
+  text-align: left; border: 1px solid var(--line); border-radius: 10px;
+  padding: 12px 16px; margin: 0 0 16px; background: #fbfcfd;
+}
+.cert-ementa h3 {
+  margin: 0 0 8px; font-size: .72rem; text-transform: uppercase;
+  letter-spacing: .12em; color: var(--muted);
+}
+.cert-ementa ul { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: 26px; }
+.cert-ementa li { font-size: .8rem; margin: 0 0 4px; break-inside: avoid; }
+
+.cert-baixo {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 28px; flex-wrap: wrap; text-align: left; margin-bottom: 14px;
+}
+.cert-emissor { display: flex; flex-direction: column; gap: 2px; font-size: .8rem; color: var(--muted); max-width: 54%; }
+.cert-emissor strong { color: var(--navy); font-size: .86rem; }
+
 .cert-assinatura {
   display: flex; flex-direction: column; align-items: center;
-  margin: 0 auto 28px; max-width: 320px;
+  margin-left: auto; min-width: 250px;
 }
-.cert-assinatura img { height: 62px; width: auto; margin-bottom: -4px; }
-.cert-linha { display: block; width: 100%; border-top: 1px solid var(--navy); margin-bottom: 6px; }
-.cert-assinante { font-weight: 700; color: var(--navy); }
-.cert-cargo { color: var(--muted); font-size: .84rem; }
+.cert-assinatura img { height: 54px; width: auto; margin-bottom: -4px; }
+.cert-linha { display: block; width: 100%; border-top: 1px solid var(--navy); margin-bottom: 5px; }
+.cert-assinante { font-weight: 700; color: var(--navy); font-size: .92rem; }
+.cert-cargo { color: var(--muted); font-size: .78rem; }
+
 .cert-rodape {
-  border-top: 1px solid var(--line); padding-top: 14px;
-  display: flex; flex-direction: column; gap: 4px;
+  border-top: 1px solid var(--line); padding-top: 10px;
+  display: flex; flex-direction: column; gap: 3px;
 }
-.cert-codigo { font-size: .88rem; }
-.cert-nota { font-size: .74rem; color: var(--muted); }
-.cert .code { font-family: ui-monospace, Menlo, Consolas, monospace; letter-spacing: .08em; }
+.cert-codigo { font-size: .82rem; }
+.cert-nota { font-size: .7rem; color: var(--muted); word-break: break-word; }
+.cert .code { font-family: ui-monospace, Menlo, Consolas, monospace; letter-spacing: .08em; font-weight: 700; }
+
+/* Formulário de emissão e link em formato de botão */
+.rotulo { display: block; font-size: .82rem; font-weight: 600; color: var(--navy); margin-bottom: 5px; }
+.field input[type="text"] { width: 100%; max-width: 420px; }
+.botao {
+  display: inline-block; border: 1px solid var(--brand); background: var(--brand);
+  color: var(--brand-ink); border-radius: 8px; padding: 9px 14px; text-decoration: none;
+}
 
 /* ---------- Rodapé ---------- */
 
@@ -292,5 +328,21 @@ ul.alternativas li.marcada-errada .etiqueta { color: #a02020; }
 .muted { color: var(--muted); }
 .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 @media print {
-  .top, .foot, .stripe, button, .muted.print-hide { display: none !important; }
+  /* A4 paisagem: 297 x 210 mm. A margem de 12 mm mantém os dados importantes
+     fora da área de corte da impressão (equivalente a ~120 px a 300 DPI). */
+  @page { size: A4 landscape; margin: 12mm; }
+
+  .top, .foot, .stripe, button, .botao, .print-hide { display: none !important; }
+  .wrap { max-width: none; padding: 0; }
+
+  .cert { border-radius: 0; padding: 0; max-width: none; border-width: 2px; }
+  .cert-nome { font-size: 22pt; }
+  .cert-texto { font-size: 11pt; max-width: none; }
+  .cert-etiqueta { font-size: 8pt; }
+  .cert-ementa h3 { font-size: 8pt; }
+  .cert-ementa li { font-size: 8.5pt; }
+  .cert-emissor { font-size: 8.5pt; max-width: 58%; }
+  .cert-emissor strong { font-size: 9.5pt; }
+  .cert-codigo { font-size: 9pt; }
+  .cert-nota { font-size: 7pt; }
 }

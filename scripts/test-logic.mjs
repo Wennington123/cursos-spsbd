@@ -10,6 +10,8 @@ import {
   unitKey,
   PASS_THRESHOLD,
 } from "../lib/course-logic.mjs";
+import { cnpjValido, cpfValido, formatarCPF, mascararCPF, nomeCompletoValido } from "../lib/documentos.mjs";
+import { documentoDoEmissor, emissor, emissorConfigurado } from "../lib/emissor.mjs";
 
 let n = 0;
 function test(name, fn) {
@@ -205,6 +207,60 @@ test("total de unidades do programa", () => {
   console.log(`\n  cursos: ${courses.length} | unidades: ${allUnits.length}`);
   for (const c of courses) console.log(`   ${c.id} ${c.slug}: ${c.units.length} unidades`);
   assert.ok(allUnits.length >= 20);
+});
+
+// ---------- Certificado: documentos, emissor e carga horária ----------
+
+test("todo curso declara carga horaria formal em horas", () => {
+  for (const c of courses) {
+    assert.ok(/^\d+\s*hora(s)?$/.test(c.cargaHoraria), `carga horaria invalida em ${c.slug}: ${c.cargaHoraria}`);
+    assert.ok(!c.cargaHoraria.includes("~"), `carga horaria com estimativa em ${c.slug}`);
+  }
+});
+
+test("CPF: aceita validos e recusa invalidos", () => {
+  assert.equal(cpfValido("529.982.247-25"), true);
+  assert.equal(cpfValido("52998224725"), true);
+  assert.equal(cpfValido("111.111.111-11"), false);
+  assert.equal(cpfValido("529.982.247-26"), false);
+  assert.equal(cpfValido("123"), false);
+  assert.equal(cpfValido(""), false);
+});
+
+test("CPF: formata e mascara para exibicao publica", () => {
+  assert.equal(formatarCPF("52998224725"), "529.982.247-25");
+  assert.equal(mascararCPF("52998224725"), "529.***.***-25");
+  assert.equal(mascararCPF("123"), "—");
+});
+
+test("CNPJ: aceita valido e recusa invalido", () => {
+  assert.equal(cnpjValido("10.358.190/0001-77"), true);
+  assert.equal(cnpjValido("10.358.190/0001-78"), false);
+  assert.equal(cnpjValido("11111111111111"), false);
+});
+
+test("nome completo exige ao menos duas palavras", () => {
+  assert.equal(nomeCompletoValido("Maria da Silva Santos"), true);
+  assert.equal(nomeCompletoValido("Wennington Dias Aquino"), true);
+  assert.equal(nomeCompletoValido("Maria"), false);
+  assert.equal(nomeCompletoValido("  "), false);
+});
+
+test("emissor do certificado esta configurado e com documento valido", () => {
+  assert.equal(emissorConfigurado(), true, "emissor incompleto em lib/emissor.mjs");
+  assert.ok(emissor.nome.length > 5);
+  assert.ok(emissor.responsavel.nome.length > 5);
+  const doc = documentoDoEmissor();
+  assert.ok(doc, "emissor sem CNPJ nem CPF do responsavel");
+  assert.equal(doc.tipo, "CNPJ");
+});
+
+test("ementa e gerada com todas as unidades do curso", () => {
+  for (const c of courses) {
+    const ementa = c.units.map((u) => `${u.id} — ${u.title}`);
+    assert.equal(ementa.length, c.units.length);
+    for (const item of ementa) assert.ok(item.includes("—") && item.length > 8, item);
+  }
 });
 
 console.log(`\n${n} testes passaram.`);

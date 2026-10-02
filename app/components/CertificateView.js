@@ -1,27 +1,86 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { issueCertificate } from "../../lib/firebaseClient.mjs";
+import { useEffect, useState } from "react";
+import { getCertificate, issueCertificate } from "../../lib/firebaseClient.mjs";
 import { courseStats } from "../../lib/course-logic.mjs";
 import { asset } from "../../lib/asset.mjs";
+import { cpfValido, formatarCPF, nomeCompletoValido } from "../../lib/documentos.mjs";
+import { emissorConfigurado } from "../../lib/emissor.mjs";
 import { useAuth } from "./useAuth";
 import { useProgress } from "./useProgress";
+
+function dataBR(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+}
+
+function periodoBR(inicio, fim) {
+  const a = dataBR(inicio);
+  const b = dataBR(fim);
+  if (!a && !b) return "";
+  if (!a || a === b) return b || a;
+  return `${a} a ${b}`;
+}
 
 export default function CertificateView({ course }) {
   const { user, enabled } = useAuth();
   const { progress } = useProgress(user);
   const st = courseStats(course, progress);
+  const configurado = emissorConfigurado();
 
+  const [nome, setNome] = useState("");
+  const [cpf, setCpf] = useState("");
   const [cert, setCert] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [origem, setOrigem] = useState("");
 
-  async function emit() {
+  useEffect(() => {
+    setOrigem(window.location.origin);
+  }, []);
+
+  // Reaproveita o que já foi informado antes, para não digitar de novo.
+  useEffect(() => {
+    const dados = progress?.dados;
+    if (!dados) return;
+    setNome((atual) => atual || dados.nome || "");
+    setCpf((atual) => atual || formatarCPF(dados.cpf || ""));
+  }, [progress]);
+
+  // Certificado já emitido: recarrega o registro para permitir reimprimir.
+  useEffect(() => {
+    const codigo = progress?.certificates?.[course.id];
+    if (!codigo || cert) return;
+    let ativo = true;
+    getCertificate(codigo)
+      .then((doc) => {
+        if (ativo && doc) setCert({ ...doc, code: codigo, course: doc.courseTitle || course.title });
+      })
+      .catch(() => {});
+    return () => {
+      ativo = false;
+    };
+  }, [progress, course.id, course.title, cert]);
+
+  async function emit(evento) {
+    evento.preventDefault();
     setError("");
+
+    if (!nomeCompletoValido(nome)) {
+      setError("Informe seu nome completo, com ao menos duas palavras.");
+      return;
+    }
+    if (!cpfValido(cpf)) {
+      setError("CPF inválido. Confira os 11 dígitos.");
+      return;
+    }
+
     setBusy(true);
     try {
-      setCert(await issueCertificate(user, course));
+      setCert(await issueCertificate(user, course, { nome, cpf }));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -29,72 +88,147 @@ export default function CertificateView({ course }) {
     }
   }
 
+  const linkVerificacao = cert ? `${origem}${asset("/verificar/")}?codigo=${cert.code}` : "";
+
   return (
     <>
-      <p className="muted">
+      <p className="muted print-hide">
         <Link href="/">Cursos</Link> · <Link href={`/curso/${course.slug}`}>{course.title}</Link>
       </p>
-      <h1>Certificado</h1>
+      <h1 className="print-hide">Certificado</h1>
 
       {!enabled && <div className="status warn">Firebase não configurado.</div>}
-      {enabled && !user && <div className="status warn">Entre com o Google para emitir o certificado.</div>}
+      {enabled && !user && (
+        <div className="status warn print-hide">Entre com o Google para emitir o certificado.</div>
+      )}
       {enabled && user && !st.complete && (
-        <div className="status warn">
+        <div className="status warn print-hide">
           Conclua todas as unidades para emitir o certificado ({st.count}/{st.total}).
         </div>
       )}
 
-      {error && <div className="status err">{error}</div>}
+      {!configurado && (
+        <div className="status warn print-hide">
+          Emissão indisponível: a identificação do emissor (nome e CNPJ) precisa ser conferida em
+          <code> lib/emissor.mjs</code>.
+        </div>
+      )}
 
-      {!cert && enabled && user && st.complete && (
-        <button onClick={emit} disabled={busy}>{busy ? "Emitindo…" : "Emitir certificado"}</button>
+      {error && <div className="status err print-hide">{error}</div>}
+
+      {!cert && enabled && user && st.complete && configurado && (
+        <form className="card print-hide" onSubmit={emit}>
+          <strong>Dados que constarão no certificado</strong>
+          <p className="muted" style={{ margin: "6px 0 0", fontSize: ".9rem" }}>
+            O certificado de curso livre exige nome completo e CPF. Confira antes de emitir: o registro
+            fica gravado e não pode ser alterado depois.
+          </p>
+
+          <div className="field">
+            <label className="rotulo" htmlFor="cert-nome">
+              Nome completo
+            </label>
+            <input
+              id="cert-nome"
+              type="text"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              autoComplete="name"
+              placeholder="Ex.: Maria da Silva Santos"
+            />
+          </div>
+
+          <div className="field">
+            <label className="rotulo" htmlFor="cert-cpf">
+              CPF
+            </label>
+            <input
+              id="cert-cpf"
+              type="text"
+              inputMode="numeric"
+              value={cpf}
+              onChange={(e) => setCpf(formatarCPF(e.target.value))}
+              placeholder="000.000.000-00"
+            />
+          </div>
+
+          <button disabled={busy}>{busy ? "Emitindo…" : "Emitir certificado"}</button>
+        </form>
       )}
 
       {cert && (
         <>
-          <article className="cert">
-            <div className="cert-logo">
-              <img src={asset("/logos/spsbd-gc.png")} alt="SPSBD-GC — Serviço de Proteção Social Básica no Domicílio para Gestantes e Crianças de 0 a 6 anos" />
+          <article className="cert" id="certificado">
+            <div className="cert-logos">
+              <img
+                className="cert-logo-servico"
+                src={asset("/logos/spsbd-gc.png")}
+                alt="SPSBD-GC — Serviço de Proteção Social Básica no Domicílio para Gestantes e Crianças de 0 a 6 anos"
+              />
+              <img className="cert-logo-cras" src={asset("/logos/cras.png")} alt="CRAS — Centro de Referência de Assistência Social" />
+              <img
+                className="cert-logo-prefeitura"
+                src={asset("/logos/petrolina-sads.jpg")}
+                alt="Secretaria de Assistência Social e Combate à Fome — Prefeitura de Petrolina"
+              />
             </div>
 
-            <p className="cert-etiqueta">Certificado de conclusão</p>
+            <p className="cert-etiqueta">Certificado de conclusão de curso livre</p>
 
             <h2 className="cert-nome">{cert.name}</h2>
+            <p className="cert-cpf">CPF {formatarCPF(cert.cpf || "")}</p>
 
             <p className="cert-texto">
               concluiu o curso <strong>{cert.course}</strong>, com carga horária de{" "}
-              <strong>{cert.cargaHoraria || course.cargaHoraria}</strong>, oferecido pela plataforma de
-              formação autoinstrucional do Serviço de Proteção Social Básica no Domicílio para Gestantes
-              e Crianças de 0 a 6 anos, no âmbito do Sistema Único de Assistência Social (SUAS).
+              <strong>{cert.cargaHoraria || course.cargaHoraria}</strong>, na modalidade autoinstrucional, no
+              período de <strong>{periodoBR(cert.periodoInicio, cert.periodoFim)}</strong>.
             </p>
 
-            <p className="cert-data">
-              {cert.issuedAt
-                ? `Emitido em ${new Date(cert.issuedAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}`
-                : ""}
-            </p>
+            <section className="cert-ementa">
+              <h3>Conteúdo programático</h3>
+              <ul>
+                {(cert.ementa || []).map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </section>
 
-            <div className="cert-assinatura">
-              <img src={asset("/assinatura.png")} alt={`Assinatura de Wennington Dias Aquino`} />
-              <span className="cert-linha" aria-hidden="true" />
-              <span className="cert-assinante">Wennington Dias Aquino</span>
-              <span className="cert-cargo">Técnico de Referência do SPSBD-GC — certificador</span>
+            <div className="cert-baixo">
+              <div className="cert-emissor">
+                <strong>{cert.emissor?.nome}</strong>
+                {cert.emissor?.documento && (
+                  <span>
+                    {cert.emissor.documentoTipo}: {cert.emissor.documento}
+                  </span>
+                )}
+                {cert.emissor?.cidade && <span>{cert.emissor.cidade}</span>}
+                <span>Data de conclusão: {dataBR(cert.periodoFim || cert.issuedAt)}</span>
+                <span>Emitido em {dataBR(cert.issuedAt)}</span>
+              </div>
+
+              <div className="cert-assinatura">
+                <img src={asset("/assinatura.png")} alt="Assinatura do certificador" />
+                <span className="cert-linha" aria-hidden="true" />
+                <span className="cert-assinante">{cert.responsavel?.nome}</span>
+                <span className="cert-cargo">{cert.responsavel?.cargo} — certificador</span>
+              </div>
             </div>
 
-            <div className="cert-rodape">
+            <footer className="cert-rodape">
               <span className="cert-codigo">
-                Código de verificação: <span className="code">{cert.code}</span>
+                Registro de autenticidade · código <span className="code">{cert.code}</span>
               </span>
               <span className="cert-nota">
-                Autenticidade conferível em /verificar/ · iniciativa independente, sem vínculo institucional.
+                Confira este registro em {linkVerificacao} · Curso livre de atualização e qualificação
+                profissional, na modalidade autoinstrucional.
               </span>
-            </div>
+            </footer>
           </article>
 
           <p className="muted print-hide" style={{ fontSize: ".88rem" }}>
-            Confirme em <Link href={`/verificar/?codigo=${cert.code}`}>/verificar/?codigo={cert.code}</Link>
+            <button className="ghost" onClick={() => window.print()}>Imprimir ou salvar em PDF (A4 paisagem)</button>
             {" · "}
-            <button className="ghost" onClick={() => window.print()}>Imprimir ou salvar em PDF</button>
+            <Link href={`/verificar/?codigo=${cert.code}`}>Conferir o registro</Link>
           </p>
         </>
       )}

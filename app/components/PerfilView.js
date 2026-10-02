@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "./useAuth";
 import { useProgress } from "./useProgress";
 import { courseStates } from "../../lib/course-logic.mjs";
-import { firebaseEnabled, issueCertificate, getCertificate, projetoId } from "../../lib/firebaseClient.mjs";
+import { firebaseEnabled, getCertificate, projetoId } from "../../lib/firebaseClient.mjs";
 
 export default function PerfilView({ catalogo }) {
   const { user, ready, enabled } = useAuth();
@@ -15,8 +15,6 @@ export default function PerfilView({ catalogo }) {
   const chaveCerts = Object.values(emitidos).sort().join(",");
 
   const [datas, setDatas] = useState({});
-  const [ocupado, setOcupado] = useState("");
-  const [erro, setErro] = useState("");
 
   useEffect(() => {
     if (!firebaseEnabled || !user || !chaveCerts) {
@@ -40,18 +38,6 @@ export default function PerfilView({ catalogo }) {
 
   const totalUnidades = estados.reduce((n, c) => n + c.total, 0);
   const unidadesFeitas = estados.reduce((n, c) => n + c.count, 0);
-
-  async function emitir(curso) {
-    setErro("");
-    setOcupado(curso.slug);
-    try {
-      await issueCertificate(user, curso);
-    } catch (e) {
-      setErro(e.message);
-    } finally {
-      setOcupado("");
-    }
-  }
 
   if (!enabled) {
     return (
@@ -128,7 +114,6 @@ export default function PerfilView({ catalogo }) {
       ))}
 
       <h2>Meus certificados</h2>
-      {erro && <div className="status err">{erro}</div>}
 
       {comCertificado.length === 0 && (
         <p className="muted">
@@ -169,9 +154,9 @@ export default function PerfilView({ catalogo }) {
                 <p className="muted" style={{ margin: "4px 0 10px" }}>
                   Curso concluído. Emita seu certificado.
                 </p>
-                <button onClick={() => emitir(c)} disabled={ocupado === c.slug}>
-                  {ocupado === c.slug ? "Emitindo…" : "Emitir certificado"}
-                </button>
+                <Link className="botao" href={`/curso/${c.slug}/certificado/`}>
+                  Informar dados e emitir
+                </Link>
               </div>
             ))}
         </>

@@ -2,6 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { firebaseEnabled, getCertificate } from "../../lib/firebaseClient.mjs";
+import { mascararCPF } from "../../lib/documentos.mjs";
+
+function dataBR(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
 
 export default function VerifyView() {
   const [code, setCode] = useState("");
@@ -62,11 +70,34 @@ export default function VerifyView() {
 
       {state && (
         <div className="card">
-          <div className="status ok">Registro encontrado.</div>
-          <p style={{ margin: 0 }}><strong>{state.name}</strong></p>
-          <p className="muted" style={{ margin: 0 }}>{state.courseTitle}</p>
+          <div className="status ok">Registro autêntico encontrado.</div>
+
+          <p style={{ margin: "0 0 2px" }}>
+            <strong>{state.name}</strong>
+          </p>
+          {state.cpf && (
+            <p className="muted" style={{ margin: 0 }}>
+              CPF {mascararCPF(state.cpf)}
+            </p>
+          )}
+
+          <p className="muted" style={{ margin: "10px 0 0" }}>
+            <strong>{state.courseTitle}</strong>
+          </p>
+          <p className="muted" style={{ margin: 0 }}>
+            Carga horária de {state.cargaHoraria || "—"}
+            {state.periodoFim ? ` · concluído em ${dataBR(state.periodoFim)}` : ""}
+          </p>
+
+          {state.emissor?.nome && (
+            <p className="muted" style={{ margin: "10px 0 0", fontSize: ".85rem" }}>
+              {state.emissor.nome}
+              {state.emissor.documento ? ` · ${state.emissor.documentoTipo}: ${state.emissor.documento}` : ""}
+            </p>
+          )}
+
           <p className="muted" style={{ margin: 0, fontSize: ".85rem" }}>
-            Código {state.code} · emitido em {new Date(state.issuedAt).toLocaleDateString("pt-BR")}
+            Código {state.code} · emitido em {dataBR(state.issuedAt)}
           </p>
         </div>
       )}

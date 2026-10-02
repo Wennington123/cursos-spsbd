@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import { gradeUnit, unitKey, courseStats, courseStates, unitStates } from "../../lib/course-logic.mjs";
-import { firebaseEnabled, saveUnitCompletion } from "../../lib/firebaseClient.mjs";
+import { saveUnitCompletion } from "../../lib/firebaseClient.mjs";
 import { renderContent } from "../../lib/asset.mjs";
 import { useAuth } from "./useAuth";
 import { useProgress } from "./useProgress";
+import Quiz from "./Quiz";
 
 export default function UnitView({ course, unit, catalogo }) {
   const { user, enabled } = useAuth();
@@ -18,42 +18,23 @@ export default function UnitView({ course, unit, catalogo }) {
   const next = course.units[index + 1];
   const meuCurso = courseStates(catalogo, progress).find((c) => c.slug === course.slug);
   const bloqueada = (meuCurso ? !meuCurso.unlocked : false) || (me ? !me.unlocked : false);
-
-  const [answers, setAnswers] = useState({});
-  const [result, setResult] = useState(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-
   const alreadyDone = me?.completed;
-
-  async function submit(e) {
-    e.preventDefault();
-    setError("");
-    setBusy(true);
-    try {
-      const graded = gradeUnit(unit, course.answers, answers);
-      if (graded.passed) {
-        await saveUnitCompletion(user, unitKey(course.slug, unit.id), graded.score);
-      }
-      setResult(graded);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusy(false);
-    }
-  }
 
   return (
     <>
       <p className="muted">
         <Link href="/">Cursos</Link> · <Link href={`/curso/${course.slug}`}>{course.title}</Link>
       </p>
-      <h1><span className="muted">{unit.id}</span> {unit.title}</h1>
+      <h1>
+        <span className="muted">{unit.id}</span> {unit.title}
+      </h1>
 
       <div className="card accent-blue">
         <strong>Objetivos de aprendizagem</strong>
         <ul>
-          {unit.objectives.map((o) => <li key={o}>{o}</li>)}
+          {unit.objectives.map((o) => (
+            <li key={o}>{o}</li>
+          ))}
         </ul>
       </div>
 
@@ -76,95 +57,38 @@ export default function UnitView({ course, unit, catalogo }) {
       <h2>Avaliação</h2>
 
       {!enabled && (
-        <div className="status warn">
-          Firebase não configurado: a avaliação não pode ser registrada.
-        </div>
+        <div className="status warn">Firebase não configurado: a avaliação não pode ser registrada.</div>
       )}
       {enabled && !user && (
         <div className="status warn">Entre com o Google para responder e registrar a conclusão.</div>
       )}
 
-      {alreadyDone && !result && <div className="status ok">Você já concluiu esta unidade.</div>}
+      <Quiz
+        questoes={unit.quiz}
+        gabarito={course.answers[unit.id]}
+        jaConcluido={Boolean(alreadyDone)}
+        podeResponder={enabled && Boolean(user) && !bloqueada}
+        corrigir={(respostas) => gradeUnit(unit, course.answers, respostas)}
+        aoAprovar={(r) => saveUnitCompletion(user, unitKey(course.slug, unit.id), r.score)}
+      />
 
-      {result && (
-        <div className={`status ${result.passed ? "ok" : "err"}`}>
-          {result.passed
-            ? `Aprovado: ${result.correct}/${result.total} corretas. Unidade registrada. Veja o gabarito abaixo.`
-            : `Ainda não: ${result.correct}/${result.total} corretas. Veja o gabarito abaixo e tente novamente.`}
-        </div>
-      )}
-      {error && <div className="status err">{error}</div>}
-
-      {(result || alreadyDone) && (
-        <section className="gabarito">
-          <h3>Gabarito</h3>
-          {unit.quiz.map((q) => {
-            const correta = course.answers[unit.id][q.id];
-            const marcada = answers[q.id] === undefined ? null : Number(answers[q.id]);
-            const acertou = marcada === correta;
-            return (
-              <div
-                className={`questao ${marcada === null ? "" : acertou ? "ok" : "err"}`}
-                key={q.id}
-              >
-                <p className="enunciado">
-                  <span className="marca" aria-hidden="true">
-                    {marcada === null ? "•" : acertou ? "✓" : "✗"}
-                  </span>{" "}
-                  {q.question}
-                </p>
-                <ul className="alternativas">
-                  {q.options.map((opt, i) => {
-                    const ehCorreta = i === correta;
-                    const foiMarcada = marcada !== null && i === marcada;
-                    const classe = ehCorreta ? "correta" : foiMarcada ? "marcada-errada" : "";
-                    return (
-                      <li className={classe} key={i}>
-                        {opt}
-                        {ehCorreta && <span className="etiqueta">correta</span>}
-                        {foiMarcada && !ehCorreta && <span className="etiqueta">sua resposta</span>}
-                      </li>
-                    );
-                  })}
-                </ul>
-                {q.explanation && <p className="explicacao">{q.explanation}</p>}
-              </div>
-            );
-          })}
-        </section>
-      )}
-
-      {enabled && user && !alreadyDone && !bloqueada && (
-        <form onSubmit={submit}>
-          {unit.quiz.map((q) => (
-            <div className="field" key={q.id}>
-              <div><strong>{q.question}</strong></div>
-              {q.options.map((opt, i) => (
-                <label className="opt" key={i}>
-                  <input
-                    type="radio"
-                    name={q.id}
-                    value={i}
-                    checked={answers[q.id] === i}
-                    onChange={() => setAnswers((a) => ({ ...a, [q.id]: i }))}
-                  />{" "}
-                  {opt}
-                </label>
-              ))}
-            </div>
-          ))}
-          <button disabled={busy || Object.keys(answers).length < unit.quiz.length}>
-            {busy ? "Enviando…" : "Enviar respostas"}
-          </button>
-        </form>
-      )}
-
-      {(result?.passed || alreadyDone) && (
+      {alreadyDone && (
         <div className="card accent-green">
           {next ? (
-            <Link href={`/curso/${course.slug}/${next.slug}`}><button>Próxima unidade →</button></Link>
+            <Link href={`/curso/${course.slug}/${next.slug}`}>
+              <button>Próxima unidade →</button>
+            </Link>
           ) : (
-            <Link href={`/curso/${course.slug}/certificado`}><button>Emitir certificado</button></Link>
+            <>
+              <strong>Você concluiu as unidades deste curso.</strong>
+              <p className="muted" style={{ margin: "4px 0 10px" }}>
+                Agora falta a avaliação final, com {course.finalExamCount} questões sobre o conjunto do
+                curso. Só com ela aprovada o certificado é liberado.
+              </p>
+              <Link href={`/curso/${course.slug}/avaliacao`}>
+                <button>Ir para a avaliação final →</button>
+              </Link>
+            </>
           )}
         </div>
       )}

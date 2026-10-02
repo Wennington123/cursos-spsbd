@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { courses } from "../lib/courses.mjs";
 import {
   gradeUnit,
+  gradeFinal,
   unitStates,
   isCourseComplete,
   completedUnitIds,
@@ -21,6 +22,14 @@ function test(name, fn) {
 }
 
 const allUnits = courses.flatMap((c) => c.units.map((u) => ({ course: c, unit: u })));
+
+// Progresso de um curso por inteiro: todas as unidades concluídas e a
+// avaliação final aprovada.
+function progressoCompleto(curso) {
+  const units = {};
+  for (const u of curso.units) units[unitKey(curso.slug, u.id)] = { completed: true };
+  return { units, finals: { [curso.slug]: { approved: true, score: 1 } } };
+}
 
 test("ha 4 cursos com unidades", () => {
   assert.equal(courses.length, 4);
@@ -135,10 +144,11 @@ test("conclusao exige todas as unidades do curso", () => {
   const partial = { units: { [unitKey(c.slug, c.units[0].id)]: { completed: true } } };
   assert.equal(courseStats(c, partial).complete, false);
 
-  const full = { units: {} };
-  for (const u of c.units) full.units[unitKey(c.slug, u.id)] = { completed: true };
-  const st = courseStats(c, full);
+  const progresso = progressoCompleto(c);
+  const st = courseStats(c, progresso);
   assert.equal(st.count, c.units.length);
+  assert.equal(st.unitsComplete, true);
+  assert.equal(st.finalApproved, true);
   assert.equal(st.complete, true);
   assert.equal(isCourseComplete(c.units, st.completed), true);
 });
@@ -146,8 +156,7 @@ test("conclusao exige todas as unidades do curso", () => {
 test("progresso de um curso nao conclui outro", () => {
   const c0 = courses[0];
   const c1 = courses[1];
-  const progress = { units: {} };
-  for (const u of c0.units) progress.units[unitKey(c0.slug, u.id)] = { completed: true };
+  const progress = progressoCompleto(c0);
   assert.equal(courseStats(c0, progress).complete, true);
   assert.equal(courseStats(c1, progress).complete, false);
 });
@@ -172,8 +181,7 @@ test("sem progresso, so o primeiro curso fica liberado", () => {
 });
 
 test("concluir um curso libera o seguinte, e so ele", () => {
-  const progress = { units: {} };
-  for (const u of courses[0].units) progress.units[unitKey(courses[0].slug, u.id)] = { completed: true };
+  const progress = progressoCompleto(courses[0]);
 
   const estados = courseStates(courses, progress);
   assert.equal(estados[0].complete, true);
@@ -194,8 +202,7 @@ test("curso parcialmente concluido nao libera o seguinte", () => {
 });
 
 test("progresso de um curso nao abre os demais em cascata", () => {
-  const progress = { units: {} };
-  for (const u of courses[1].units) progress.units[unitKey(courses[1].slug, u.id)] = { completed: true };
+  const progress = progressoCompleto(courses[1]);
 
   const estados = courseStates(courses, progress);
   assert.equal(estados[1].complete, true);
@@ -260,6 +267,93 @@ test("ementa e gerada com todas as unidades do curso", () => {
     assert.equal(ementa.length, c.units.length);
     for (const item of ementa) assert.ok(item.includes("—") && item.length > 8, item);
   }
+});
+
+// ---------- Avaliação final de cada curso ----------
+
+test("cada curso tem avaliacao final com 10 questoes de 4 alternativas", () => {
+  for (const c of courses) {
+    const ex = c.finalExam;
+    assert.ok(ex, `curso sem avaliacao final: ${c.slug}`);
+    assert.equal(ex.questions.length, 10, `questoes da final em ${c.slug}`);
+
+    const ids = ex.questions.map((q) => q.id);
+    assert.equal(new Set(ids).size, ids.length, `ids duplicados na final de ${c.slug}`);
+
+    for (const q of ex.questions) {
+      assert.equal(q.options.length, 4, `alternativas em ${c.slug}/${q.id}`);
+      assert.ok(typeof q.explanation === "string" && q.explanation.trim().length >= 15, `explicacao em ${c.slug}/${q.id}`);
+      const idx = ex.answers[q.id];
+      assert.ok(Number.isInteger(idx), `gabarito ausente em ${c.slug}/${q.id}`);
+      assert.ok(idx >= 0 && idx < q.options.length, `indice invalido em ${c.slug}/${q.id}`);
+    }
+
+    for (const k of Object.keys(ex.answers)) {
+      assert.ok(ids.includes(k), `gabarito orfao na final de ${c.slug}: ${k}`);
+    }
+  }
+});
+
+test("questoes da final nao repetem enunciados das unidades", () => {
+  const dasUnidades = new Set(
+    allUnits.flatMap(({ unit }) => unit.quiz.map((q) => q.question.trim().toLowerCase()))
+  );
+  const repetidas = [];
+  for (const c of courses) {
+    for (const q of c.finalExam.questions) {
+      if (dasUnidades.has(q.question.trim().toLowerCase())) repetidas.push(`${c.slug}/${q.id}`);
+    }
+  }
+  assert.deepEqual(repetidas, [], "enunciados repetidos: " + repetidas.join(", "));
+});
+
+test("aprovacao na final exige 60 por cento", () => {
+  const ex = courses[0].finalExam;
+  const certas = {};
+  for (const q of ex.questions) certas[q.id] = ex.answers[q.id];
+
+  assert.equal(gradeFinal(ex, certas).passed, true);
+  assert.equal(gradeFinal(ex, certas).correct, 10);
+  assert.equal(gradeFinal(ex, {}).passed, false);
+  assert.equal(gradeFinal(ex, {}).correct, 0);
+
+  const seis = { ...certas };
+  for (const q of ex.questions.slice(6)) delete seis[q.id];
+  assert.equal(gradeFinal(ex, seis).correct, 6);
+  assert.equal(gradeFinal(ex, seis).passed, true);
+
+  const cinco = { ...seis };
+  delete cinco[ex.questions[5].id];
+  assert.equal(gradeFinal(ex, cinco).passed, false);
+});
+
+test("conclusao do curso exige unidades e avaliacao final", () => {
+  const c = courses[0];
+  const progress = { units: {} };
+  for (const u of c.units) progress.units[unitKey(c.slug, u.id)] = { completed: true };
+
+  assert.equal(courseStats(c, progress).unitsComplete, true);
+  assert.equal(courseStats(c, progress).finalApproved, false);
+  assert.equal(courseStats(c, progress).complete, false);
+
+  progress.finals = { [c.slug]: { approved: true, score: 0.9 } };
+  assert.equal(courseStats(c, progress).finalApproved, true);
+  assert.equal(courseStats(c, progress).complete, true);
+});
+
+test("curso seguinte so libera com a final do anterior aprovada", () => {
+  const progress = { units: {} };
+  for (const u of courses[0].units) progress.units[unitKey(courses[0].slug, u.id)] = { completed: true };
+
+  const semFinal = courseStates(courses, progress);
+  assert.equal(semFinal[0].unitsComplete, true);
+  assert.equal(semFinal[0].complete, false);
+  assert.equal(semFinal[1].unlocked, false);
+
+  progress.finals = { [courses[0].slug]: { approved: true, score: 0.8 } };
+  const comFinal = courseStates(courses, progress);
+  assert.equal(comFinal[0].complete, true);
+  assert.equal(comFinal[1].unlocked, true);
 });
 
 console.log(`\n${n} testes passaram.`);

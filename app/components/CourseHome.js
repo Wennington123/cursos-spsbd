@@ -78,10 +78,28 @@ export default function CourseHome({ course, catalogo }) {
         })}
       </ul>
 
+      <div className="card accent-blue">
+        <div className="row" style={{ justifyContent: "space-between" }}>
+          <strong>Avaliação final</strong>
+          <span className="muted" style={{ fontSize: ".85rem" }}>
+            {st.finalApproved ? "aprovada" : st.unitsComplete ? "disponível" : "bloqueada"}
+          </span>
+        </div>
+        <p className="muted" style={{ margin: "4px 0 10px", fontSize: ".9rem" }}>
+          {course.finalExamCount} questões sobre o conjunto do curso.
+          {!st.unitsComplete && " Liberada ao concluir todas as unidades."}
+        </p>
+        {st.unitsComplete && (
+          <Link href={`/curso/${course.slug}/avaliacao`}>
+            <button>{st.finalApproved ? "Rever avaliação final" : "Fazer a avaliação final"}</button>
+          </Link>
+        )}
+      </div>
+
       {st.complete && (
         <div className="card accent-green">
           <strong>Curso concluído!</strong>
-          <p className="muted">Você pode emitir seu certificado.</p>
+          <p className="muted">Unidades e avaliação final concluídas. Você pode emitir seu certificado.</p>
           <Link href={`/curso/${course.slug}/certificado`}>
             <button>Emitir certificado</button>
           </Link>

@@ -215,6 +215,7 @@ input[type="text"] { font: inherit; padding: 9px 12px; border: 1px solid var(--l
   display: inline-block; border-bottom: 2px solid var(--yellow); padding: 0 12px 5px;
 }
 .cert-cpf { font-size: .84rem; color: var(--muted); margin: 8px 0 14px; letter-spacing: .04em; }
+.cert-cpf-nota { font-size: .7rem; }
 .cert-texto { max-width: 760px; margin: 0 auto 16px; font-size: .96rem; }
 .cert-texto strong { color: var(--navy); }
 
@@ -308,6 +309,11 @@ ul.alternativas li.marcada-errada .etiqueta { color: #a02020; }
   margin: 10px 0 0; padding-top: 10px; border-top: 1px dashed var(--line);
   color: var(--muted); font-size: .9rem;
 }
+
+/* Numeração das questões e letras das alternativas */
+.enunciado-form { margin-bottom: 8px; }
+.letra { font-weight: 700; color: var(--navy); }
+.opt .letra { margin-right: 4px; }
 
 /* ---------- Perfil ---------- */
 

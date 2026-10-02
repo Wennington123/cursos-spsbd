@@ -77,7 +77,7 @@ export default function VerifyView() {
           </p>
           {state.cpf && (
             <p className="muted" style={{ margin: 0 }}>
-              CPF {mascararCPF(state.cpf)}
+              CPF {mascararCPF(state.cpf)} <span style={{ fontSize: ".8rem" }}>· registro vinculado ao CPF do titular</span>
             </p>
           )}
 

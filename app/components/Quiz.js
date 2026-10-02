@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { LETRAS } from "../../lib/course-logic.mjs";
 
-// Formulário e gabarito de uma avaliação. É usado tanto nas unidades quanto na
-// avaliação final do curso, para que numeração, letras (a, b, c, d) e gabarito
-// sejam idênticos nos dois casos.
+// Avaliação em lista única: a questão e as suas alternativas aparecem uma vez
+// só. Antes de enviar, as alternativas são selecionáveis; depois de enviar (ou
+// quando a avaliação já foi concluída), as mesmas alternativas passam a mostrar
+// a resposta correta, a escolha do aluno e a explicação — sem repetir a questão.
 //
 // corrigir  — recebe as respostas e devolve { correct, total, score, passed }
 // aoAprovar — chamado quando o resultado é aprovado, para registrar no servidor
@@ -16,6 +17,8 @@ export default function Quiz({ questoes, gabarito, jaConcluido, podeResponder = 
   const [erro, setErro] = useState("");
 
   const respondidas = Object.keys(respostas).length;
+  const emRevisao = Boolean(resultado) || jaConcluido;
+  const podeMarcar = podeResponder && !jaConcluido;
 
   async function enviar(evento) {
     evento.preventDefault();
@@ -32,85 +35,84 @@ export default function Quiz({ questoes, gabarito, jaConcluido, podeResponder = 
     }
   }
 
-  const mostrarGabarito = Boolean(resultado) || jaConcluido;
-
   return (
-    <>
+    <form onSubmit={enviar}>
       {jaConcluido && !resultado && <div className="status ok">Você já concluiu esta avaliação.</div>}
 
       {resultado && (
         <div className={`status ${resultado.passed ? "ok" : "err"}`}>
           {resultado.passed
-            ? `Aprovado: ${resultado.correct} de ${resultado.total}. Registrado. Veja o gabarito abaixo.`
-            : `Ainda não: ${resultado.correct} de ${resultado.total}. Veja o gabarito abaixo e tente novamente.`}
+            ? `Aprovado: ${resultado.correct} de ${resultado.total}. Registrado.`
+            : `Ainda não: ${resultado.correct} de ${resultado.total}. Veja abaixo o que errou e tente novamente.`}
         </div>
       )}
+
       {erro && <div className="status err">{erro}</div>}
 
-      {mostrarGabarito && (
-        <section className="gabarito">
-          <h3>Gabarito</h3>
-          {questoes.map((q, qi) => {
-            const correta = gabarito[q.id];
-            const marcada = respostas[q.id] === undefined ? null : Number(respostas[q.id]);
-            const acertou = marcada === correta;
-            return (
-              <div className={`questao ${marcada === null ? "" : acertou ? "ok" : "err"}`} key={q.id}>
-                <p className="enunciado">
-                  <span className="marca" aria-hidden="true">
-                    {marcada === null ? "•" : acertou ? "✓" : "✗"}
-                  </span>{" "}
-                  <strong>Questão {qi + 1}.</strong> {q.question}
-                </p>
-                <ul className="alternativas">
-                  {q.options.map((opt, i) => {
-                    const ehCorreta = i === correta;
-                    const foiMarcada = marcada !== null && i === marcada;
-                    const classe = ehCorreta ? "correta" : foiMarcada ? "marcada-errada" : "";
-                    return (
-                      <li className={classe} key={i}>
-                        <span>
-                          <span className="letra">{LETRAS[i]})</span> {opt}
-                        </span>
-                        {ehCorreta && <span className="etiqueta">correta</span>}
-                        {foiMarcada && !ehCorreta && <span className="etiqueta">sua resposta</span>}
-                      </li>
-                    );
-                  })}
-                </ul>
-                {q.explanation && <p className="explicacao">{q.explanation}</p>}
-              </div>
-            );
-          })}
-        </section>
-      )}
+      {questoes.map((q, qi) => {
+        const correta = gabarito[q.id];
+        const marcada = respostas[q.id] === undefined ? null : Number(respostas[q.id]);
+        const acertou = marcada !== null && marcada === correta;
+        const estado = !emRevisao || marcada === null ? "" : acertou ? "questao-ok" : "questao-err";
 
-      {podeResponder && !jaConcluido && (
-        <form onSubmit={enviar}>
-          {questoes.map((q, qi) => (
-            <div className="field" key={q.id}>
-              <div className="enunciado-form">
-                <strong>Questão {qi + 1}.</strong> {q.question}
-              </div>
-              {q.options.map((opt, i) => (
-                <label className="opt" key={i}>
-                  <input
-                    type="radio"
-                    name={q.id}
-                    value={i}
-                    checked={respostas[q.id] === i}
-                    onChange={() => setRespostas((a) => ({ ...a, [q.id]: i }))}
-                  />
-                  <span className="letra">{LETRAS[i]})</span> {opt}
-                </label>
-              ))}
+        return (
+          <div className={`field ${estado}`} key={q.id}>
+            <div className="enunciado-form">
+              {emRevisao && (
+                <span className="marca" aria-hidden="true">
+                  {marcada === null ? "•" : acertou ? "✓" : "✗"}{" "}
+                </span>
+              )}
+              <strong>Questão {qi + 1}.</strong> {q.question}
             </div>
-          ))}
-          <button disabled={enviando || respondidas < questoes.length}>
-            {enviando ? "Enviando…" : "Enviar respostas"}
-          </button>
-        </form>
+
+            {q.options.map((opt, i) => {
+              const ehCorreta = emRevisao && i === correta;
+              const foiMarcada = emRevisao && marcada !== null && i === marcada;
+              const classe = `opt${ehCorreta ? " correta" : foiMarcada ? " marcada-errada" : ""}${
+                podeMarcar ? "" : " opt-estatico"
+              }`;
+
+              const conteudo = (
+                <>
+                  {podeMarcar && (
+                    <input
+                      type="radio"
+                      name={q.id}
+                      value={i}
+                      checked={respostas[q.id] === i}
+                      onChange={() => setRespostas((a) => ({ ...a, [q.id]: i }))}
+                    />
+                  )}
+                  <span className="opt-texto">
+                    <span className="letra">{LETRAS[i]})</span> {opt}
+                  </span>
+                  {ehCorreta && <span className="etiqueta">correta</span>}
+                  {foiMarcada && !ehCorreta && <span className="etiqueta">sua resposta</span>}
+                </>
+              );
+
+              return podeMarcar ? (
+                <label className={classe} key={i}>
+                  {conteudo}
+                </label>
+              ) : (
+                <div className={classe} key={i}>
+                  {conteudo}
+                </div>
+              );
+            })}
+
+            {emRevisao && q.explanation && <p className="explicacao">{q.explanation}</p>}
+          </div>
+        );
+      })}
+
+      {podeMarcar && (
+        <button disabled={enviando || respondidas < questoes.length}>
+          {enviando ? "Enviando…" : resultado ? "Enviar novamente" : "Enviar respostas"}
+        </button>
       )}
-    </>
+    </form>
   );
 }

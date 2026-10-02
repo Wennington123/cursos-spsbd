@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { getCertificate, issueCertificate } from "../../lib/firebaseClient.mjs";
 import { courseStats } from "../../lib/course-logic.mjs";
 import { asset } from "../../lib/asset.mjs";
-import { cpfValido, formatarCPF, mascararCPF, nomeCompletoValido } from "../../lib/documentos.mjs";
+import { cpfValido, formatarCPF, nomeCompletoValido } from "../../lib/documentos.mjs";
 import { emissorConfigurado } from "../../lib/emissor.mjs";
 import { useAuth } from "./useAuth";
 import { useProgress } from "./useProgress";
@@ -183,10 +183,7 @@ export default function CertificateView({ course }) {
             <p className="cert-etiqueta">Certificado de conclusão de curso livre</p>
 
             <h2 className="cert-nome">{cert.name}</h2>
-            <p className="cert-cpf">
-              CPF {mascararCPF(cert.cpf || "")}
-              <span className="cert-cpf-nota"> — dígitos protegidos; a conferência é feita pelo código</span>
-            </p>
+            <p className="cert-cpf">CPF {formatarCPF(cert.cpf || "")}</p>
 
             <p className="cert-texto">
               concluiu o curso <strong>{cert.course}</strong>, com carga horária de{" "}

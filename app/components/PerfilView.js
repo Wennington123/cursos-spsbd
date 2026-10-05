@@ -6,6 +6,7 @@ import { useAuth } from "./useAuth";
 import { useProgress } from "./useProgress";
 import { courseStates } from "../../lib/course-logic.mjs";
 import { firebaseEnabled, getCertificate, projetoId } from "../../lib/firebaseClient.mjs";
+import { certificadoCompleto } from "../../lib/certificado.mjs";
 
 export default function PerfilView({ catalogo }) {
   const { user, ready, enabled } = useAuth();
@@ -14,11 +15,13 @@ export default function PerfilView({ catalogo }) {
   const emitidos = progress?.certificates || {};
   const chaveCerts = Object.values(emitidos).sort().join(",");
 
-  const [datas, setDatas] = useState({});
+  // Guarda o registro de cada certificado: além da data, serve para saber se ele
+  // está no formato atual ou se precisa ser emitido de novo.
+  const [certs, setCerts] = useState({});
 
   useEffect(() => {
     if (!firebaseEnabled || !user || !chaveCerts) {
-      setDatas({});
+      setCerts({});
       return;
     }
     let ativo = true;
@@ -27,8 +30,8 @@ export default function PerfilView({ catalogo }) {
       .then((pares) => {
         if (!ativo) return;
         const mapa = {};
-        for (const [codigo, doc] of pares) if (doc) mapa[codigo] = doc.issuedAt;
-        setDatas(mapa);
+        for (const [codigo, doc] of pares) mapa[codigo] = doc || null;
+        setCerts(mapa);
       })
       .catch(() => {});
     return () => {
@@ -125,17 +128,29 @@ export default function PerfilView({ catalogo }) {
         <ul className="lista-certs">
           {comCertificado.map((c) => {
             const codigo = emitidos[c.id];
+            const doc = certs[codigo];
+            const antigo = doc !== undefined && !certificadoCompleto(doc);
             return (
               <li key={c.id}>
                 <strong>{c.title}</strong>
                 <span className="muted codigo">{codigo}</span>
-                {datas[codigo] && (
+                {doc?.issuedAt && (
                   <span className="muted" style={{ fontSize: ".85rem" }}>
-                    emitido em {new Date(datas[codigo]).toLocaleDateString("pt-BR")}
+                    emitido em {new Date(doc.issuedAt).toLocaleDateString("pt-BR")}
                   </span>
                 )}
-                <Link style={{ marginLeft: "auto" }} href={`/verificar/?codigo=${codigo}`}>
-                  verificar
+                {antigo && (
+                  <span className="etiqueta" style={{ color: "#a02020" }}>
+                    formato antigo
+                  </span>
+                )}
+                <Link href={`/verificar/?codigo=${codigo}`}>verificar</Link>
+                <Link
+                  className={antigo ? "botao" : ""}
+                  style={{ marginLeft: "auto" }}
+                  href={`/curso/${c.slug}/certificado/`}
+                >
+                  {antigo ? "Emitir o certificado novo" : "Abrir certificado"}
                 </Link>
               </li>
             );

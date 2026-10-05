@@ -6,6 +6,7 @@ import { getCertificate, issueCertificate } from "../../lib/firebaseClient.mjs";
 import { courseStats } from "../../lib/course-logic.mjs";
 import { asset } from "../../lib/asset.mjs";
 import { cpfValido, formatarCPF, nomeCompletoValido } from "../../lib/documentos.mjs";
+import { certificadoCompleto } from "../../lib/certificado.mjs";
 import { emissorConfigurado } from "../../lib/emissor.mjs";
 import { useAuth } from "./useAuth";
 import { useProgress } from "./useProgress";
@@ -37,6 +38,7 @@ export default function CertificateView({ course }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [origem, setOrigem] = useState("");
+  const [antigo, setAntigo] = useState(false);
 
   useEffect(() => {
     setOrigem(window.location.origin);
@@ -51,13 +53,20 @@ export default function CertificateView({ course }) {
   }, [progress]);
 
   // Certificado já emitido: recarrega o registro para permitir reimprimir.
+  // Registro do formato antigo, sem os dados exigidos, não é reaproveitado:
+  // avisa o titular e libera a emissão de um novo.
   useEffect(() => {
     const codigo = progress?.certificates?.[course.id];
     if (!codigo || cert) return;
     let ativo = true;
     getCertificate(codigo)
       .then((doc) => {
-        if (ativo && doc) setCert({ ...doc, code: codigo, course: doc.courseTitle || course.title });
+        if (!ativo) return;
+        if (certificadoCompleto(doc)) {
+          setCert({ ...doc, code: codigo, course: doc.courseTitle || course.title });
+        } else {
+          setAntigo(true);
+        }
       })
       .catch(() => {});
     return () => {
@@ -111,6 +120,15 @@ export default function CertificateView({ course }) {
               <Link href={`/curso/${course.slug}/avaliacao`}>Ir para a avaliação final</Link>
             </>
           )}
+        </div>
+      )}
+
+      {antigo && !cert && (
+        <div className="status warn print-hide">
+          Seu certificado anterior foi emitido antes da inclusão de nome completo, CPF, conteúdo
+          programático e período, então não traz o que o documento exige. Emita o novo preenchendo os dados
+          abaixo: ele sai com um código novo, que passa a ser o seu certificado válido — o código anterior
+          continua apenas como registro.
         </div>
       )}
 

@@ -13,6 +13,7 @@ import {
 } from "../lib/course-logic.mjs";
 import { cnpjValido, cpfValido, formatarCPF, mascararCPF, nomeCompletoValido } from "../lib/documentos.mjs";
 import { emissor, emissorConfigurado } from "../lib/emissor.mjs";
+import { certificadoCompleto } from "../lib/certificado.mjs";
 
 let n = 0;
 function test(name, fn) {
@@ -354,6 +355,31 @@ test("curso seguinte so libera com a final do anterior aprovada", () => {
   const comFinal = courseStates(courses, progress);
   assert.equal(comFinal[0].complete, true);
   assert.equal(comFinal[1].unlocked, true);
+});
+
+// ---------- Reaproveitamento de certificado ----------
+
+test("certificado do formato antigo nao e reaproveitado", () => {
+  const completo = {
+    cpf: "52998224725",
+    ementa: ["1.1 — O SUAS e as segurancas socioassistenciais"],
+    periodoFim: "2026-10-05T12:00:00.000Z",
+    emissor: { nome: "Wennington Dias Aquino" },
+  };
+
+  assert.equal(certificadoCompleto(completo), true);
+
+  assert.equal(certificadoCompleto(null), false);
+  assert.equal(certificadoCompleto(undefined), false);
+  assert.equal(certificadoCompleto({}), false);
+
+  // Registro no formato antigo: so nome e curso, sem os dados exigidos.
+  assert.equal(certificadoCompleto({ name: "Maria", courseTitle: "Fundamentos do SPSBD-GC" }), false);
+
+  assert.equal(certificadoCompleto({ ...completo, cpf: "" }), false);
+  assert.equal(certificadoCompleto({ ...completo, ementa: [] }), false);
+  assert.equal(certificadoCompleto({ ...completo, periodoFim: null }), false);
+  assert.equal(certificadoCompleto({ ...completo, emissor: {} }), false);
 });
 
 console.log(`\n${n} testes passaram.`);
